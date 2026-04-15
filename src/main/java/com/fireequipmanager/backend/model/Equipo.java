@@ -4,12 +4,17 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
 
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 @Entity
 @Table(name = "equipo", uniqueConstraints = {
         @UniqueConstraint(columnNames = "numeroSerie"),
         @UniqueConstraint(columnNames = "codigoInterno")
 })
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Equipo {
 
     @Id
@@ -32,11 +37,13 @@ public class Equipo {
 
     private Integer vidaUtilMeses;
 
+    private String ubicacionActual;
+
     @ManyToOne
     @JoinColumn(name = "tipo_id", nullable = false)
-    private TipoEquipo tipo;
+    private TipoEquipo tipoEquipo;
 
     @ManyToOne
     @JoinColumn(name = "estado_id", nullable = false)
-    private EstadoEquipo estado;
+    private EstadoEquipo estadoEquipo;
 }
