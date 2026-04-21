@@ -35,7 +35,7 @@ public class Equipo {
 
     private LocalDate fechaCompra;
 
-    private Integer vidaUtilMeses;
+    private Integer vidaUtilAnios;
 
     private String ubicacionActual;
 

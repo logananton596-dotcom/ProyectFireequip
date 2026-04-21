@@ -35,7 +35,7 @@ public class EquipoService {
             equipo.setMarca(equipoActualizado.getMarca());
             equipo.setModelo(equipoActualizado.getModelo());
             equipo.setFechaCompra(equipoActualizado.getFechaCompra());
-            equipo.setVidaUtilMeses(equipoActualizado.getVidaUtilMeses());
+            equipo.setVidaUtilAnios(equipoActualizado.getVidaUtilAnios());
             equipo.setUbicacionActual(equipoActualizado.getUbicacionActual());
             equipo.setTipoEquipo(equipoActualizado.getTipoEquipo());
             equipo.setEstadoEquipo(equipoActualizado.getEstadoEquipo());
