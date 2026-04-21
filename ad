@@ -1,0 +1,17 @@
+[33mcommit bd6741bad1d80070f70f15d1eea65a2bd3d0391f[m[33m ([m[1;36mHEAD -> [m[1;32mfeature/docker-activoV1[m[33m, [m[1;31morigin/feature/docker-activoV1[m[33m)[m
+Author: logan <logananton596@gmail.com>
+Date:   Tue Apr 21 10:18:13 2026 -0500
+
+    Avance: nueva funcionalidad integracion basica con docker
+
+[33mcommit ab1ac1d84b36bb024903a7a27aef8ba2148742a0[m[33m ([m[1;31morigin/main[m[33m, [m[1;32mmain[m[33m)[m
+Author: logan <logananton596@gmail.com>
+Date:   Wed Apr 15 11:31:03 2026 -0500
+
+    Actualizacion: Creacion de primer endpoint Equipos
+
+[33mcommit 738485361253b85f9250a25a62640360575ef129[m
+Author: logan <logananton596@gmail.com>
+Date:   Tue Apr 14 17:26:02 2026 -0500
+
+    Primera versión del proyecto FireequipBackend
