@@ -29,6 +29,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t $IMAGE_NAME:latest .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/fireequip-backend:latest .
       - name: Push Docker image
-        run: docker push $IMAGE_NAME:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/fireequip-backend:latest
