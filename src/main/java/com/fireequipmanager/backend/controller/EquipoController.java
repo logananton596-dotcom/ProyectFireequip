@@ -2,6 +2,8 @@ package com.fireequipmanager.backend.controller;
 
 import com.fireequipmanager.backend.model.Equipo;
 import com.fireequipmanager.backend.service.EquipoService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +17,7 @@ public class EquipoController {
 
     public EquipoController(EquipoService equipoService) {
         this.equipoService = equipoService;
+
     }
 
     @PostMapping
@@ -41,4 +44,11 @@ public class EquipoController {
     public void eliminar(@PathVariable Long id) {
         equipoService.eliminar(id);
     }
+
+
+    @PostMapping
+    public ResponseEntity<Equipo> crearr(@RequestBody Equipo equipo) {
+        return ResponseEntity.ok(equipoService.crearEquipo(equipo));
+    }
 }
+
