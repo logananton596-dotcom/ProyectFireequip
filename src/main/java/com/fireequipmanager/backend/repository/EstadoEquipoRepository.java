@@ -8,5 +8,5 @@ import com.fireequipmanager.backend.model.EstadoEquipo;
 public interface EstadoEquipoRepository extends JpaRepository<EstadoEquipo, Long> {
 
     Optional<EstadoEquipo> findByNombre(String nombre);
-
+    
 }

@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-
+import jakarta.persistence.Table;
 // Anotaciones de Lombok
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor // Genera constructor vacío (obligatorio para JPA)
 @AllArgsConstructor // Genera constructor con todos los campos (opcional pero útil)
 @Entity
+@Table(name = "asignacion")
 public class Asignacion {
 
     @Id

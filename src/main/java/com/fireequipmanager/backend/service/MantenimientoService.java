@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+
+import com.fireequipmanager.backend.exception.BusinessException;
 import com.fireequipmanager.backend.model.Equipo;
 import com.fireequipmanager.backend.model.EstadoEquipo;
 import com.fireequipmanager.backend.model.Mantenimiento;
@@ -27,71 +29,68 @@ public class MantenimientoService {
         this.estadoRepository = estadoRepository;
     }
 
+
+
     public Mantenimiento registrarMantenimiento(Mantenimiento mantenimiento) {
-
-        // 1. Validar que el equipo exista
+        // 1. Validar equipo
         Equipo equipo = equipoRepository.findById(mantenimiento.getEquipo().getId())
-                .orElseThrow(() -> new RuntimeException("Equipo no encontrado"));
+                .orElseThrow(() -> new BusinessException("Equipo no encontrado"));
 
-        // 2. Validar tipo 
-        if (mantenimiento.getTipo() == null ||
-            (!mantenimiento.getTipo().equals("PREVENTIVO") &&
-             !mantenimiento.getTipo().equals("CORRECTIVO"))) {
-
-            throw new RuntimeException("Tipo de mantenimiento inválido");
+        // 2. Validar que el equipo no esté ya en mantenimiento o dado de baja
+        String estadoActual = equipo.getEstadoEquipo().getNombre();
+        if (estadoActual.equals("EN_MANTENIMIENTO") || estadoActual.contains("BAJA")) {
+            throw new BusinessException("El equipo no está disponible para mantenimiento (Estado: " + estadoActual + ")");
         }
 
-        // 3. Validar fecha
+        // 3. Validar tipo de mantenimiento
+        if (mantenimiento.getTipo() == null || 
+           (!mantenimiento.getTipo().equalsIgnoreCase("PREVENTIVO") && 
+            !mantenimiento.getTipo().equalsIgnoreCase("CORRECTIVO"))) {
+            throw new BusinessException("El tipo debe ser PREVENTIVO o CORRECTIVO");
+        }
+
+        // 4. Configurar fechas
         if (mantenimiento.getFecha() == null) {
             mantenimiento.setFecha(LocalDate.now());
         }
 
-
-        // 3. CAMBIO CLAVE: Buscar el estado real en la BD
-        // En lugar de renombrar el estado actual del equipo, le asignamos uno nuevo
-        EstadoEquipo estadoEnMantenimiento = 
-                    estadoRepository.findByNombre("EN_MANTENIMIENTO")
-                .orElseThrow(() -> new RuntimeException
-                ("El estado 'EN_MANTENIMIENTO' no existe en la BD"));
-        // Asignamos el objeto estado completo al equipo
-        equipo.setEstadoEquipo(estadoEnMantenimiento);
-
-        // 4. Guardar cambios
+        // 5. Cambiar estado del equipo a EN_MANTENIMIENTO
+        EstadoEquipo estadoEnMante = estadoRepository.findByNombre("EN_MANTENIMIENTO")
+                .orElseThrow(() -> new BusinessException("Estado 'EN_MANTENIMIENTO' no configurado en BD"));
+        
+        equipo.setEstadoEquipo(estadoEnMante);
         equipoRepository.save(equipo);
-        // 5. Asociar equipo al mantenimiento
+
         mantenimiento.setEquipo(equipo);
-
         return mantenimientoRepository.save(mantenimiento);
-
     }
 
-
     public Mantenimiento finalizarMantenimiento(Long mantenimientoId, int mesesParaProximo) {
-        // 1. Buscar el mantenimiento
         Mantenimiento mantenimiento = mantenimientoRepository.findById(mantenimientoId)
-                .orElseThrow(() -> new RuntimeException("Mantenimiento no encontrado"));
+                .orElseThrow(() -> new BusinessException("Mantenimiento no encontrado"));
 
-        // 2. Verificar si ya tiene fechaFin (si ya está cerrado)
         if (mantenimiento.getFechaFin() != null) {
-            throw new RuntimeException("Este mantenimiento ya fue finalizado");
+            throw new BusinessException("Este mantenimiento ya fue cerrado anteriormente");
         }
 
-        // 3. Registrar fin y calcular próximo mantenimiento
         LocalDate hoy = LocalDate.now();
-        mantenimiento.setFechaFin(hoy); // Marcamos el cierre
         
-        // Calculamos la fecha sugerida para el siguiente mantenimiento
+        // Validación lógica de fechas
+        if (hoy.isBefore(mantenimiento.getFecha())) {
+            throw new BusinessException("La fecha de fin no puede ser anterior a la fecha de inicio");
+        }
+
+        mantenimiento.setFechaFin(hoy);
         mantenimiento.setFechaProximo(hoy.plusMonths(mesesParaProximo));
 
-        // 4. Regresar el equipo a estado OPERATIVO
+        // Regresar equipo a OPERATIVO
         Equipo equipo = mantenimiento.getEquipo();
         EstadoEquipo operativo = estadoRepository.findByNombre("OPERATIVO")
-                .orElseThrow(() -> new RuntimeException("Estado OPERATIVO no encontrado"));
+                .orElseThrow(() -> new BusinessException("Estado 'OPERATIVO' no configurado en BD"));
         
         equipo.setEstadoEquipo(operativo);
-
-        // 5. Guardar todo
         equipoRepository.save(equipo);
+
         return mantenimientoRepository.save(mantenimiento);
     }
 

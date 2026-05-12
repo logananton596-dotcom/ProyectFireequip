@@ -1,9 +1,8 @@
 package com.fireequipmanager.backend.model;
-
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
-
+import java.time.LocalDateTime;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
@@ -46,4 +45,23 @@ public class Equipo {
     @ManyToOne
     @JoinColumn(name = "estado_id", nullable = false)
     private EstadoEquipo estadoEquipo;
+
+    //para dar de baja 
+    private String motivoBaja;
+    private String autorizadoPor;
+    private LocalDate fechaBaja;
+
+
+    //para seguir un historial
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }

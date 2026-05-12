@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
 import java.time.LocalDate;
 
 // 1. Importaciones de Lombok
@@ -19,6 +21,7 @@ import lombok.AllArgsConstructor;
 @Setter // Genera automáticamente setEquipo(...), setFecha(...), etc.
 @NoArgsConstructor // Genera constructor sin argumentos
 @AllArgsConstructor // Genera constructor con todos los argumentos
+@Table(name = "mantenimiento")
 public class Mantenimiento {
 
     @Id
