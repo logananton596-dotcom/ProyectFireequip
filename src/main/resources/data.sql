@@ -18,8 +18,9 @@ INSERT INTO tipo_equipo (nombre) VALUES ('Equipo de Rescate');
 -- 4. INSERTAR USUARIO ADMINISTRADOR INICIAL
 -- La contraseña es 'admin123' encriptada con BCrypt
 -- Importante: El ID del rol ADMIN suele ser 1
+
 INSERT INTO usuario (username, password, activo, rol_id) 
-VALUES ('admin', '$2a$10$Xptf.dFhL.MuxlHq8AAsmOAtXJpYInlAnGvI/G0OtoV2sTzXp3YyG', true, 1);
+VALUES ('admin', '$2a$10$7R4M8Hw0iQzX1vS9yE3uOe1aK3vV7Hn6X5t9u7h3y6wR93O2l1vG.', true, 1);
 
 -- 5. INSERTAR USOS DE EMERGENCIA (OPCIONAL)
 INSERT INTO uso_emergencia (nombre) VALUES ('Incendio Estructural');

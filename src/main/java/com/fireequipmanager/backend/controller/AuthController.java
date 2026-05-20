@@ -2,6 +2,7 @@ package com.fireequipmanager.backend.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import com.fireequipmanager.backend.model.Usuario;
 import com.fireequipmanager.backend.service.UsuarioService;
 import com.fireequipmanager.backend.security.JwtUtil;
 
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -34,7 +36,13 @@ public class AuthController {
         // 1. Buscar usuario a través del servicio
         Usuario usuario = usuarioService.buscarPorUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
-
+        //  AGREGA ESTAS LÍNEAS DE AUDITORÍA:
+        System.out.println("--- AUDITORÍA DE LOGIN ---");
+        System.out.println("Texto plano enviado desde Angular: [" + loginRequest.getPassword() + "]");
+        System.out.println("Hash recuperado de la Base de Datos: [" + usuario.getPassword() + "]");
+        System.out.println("¿Coinciden los valores?: " + passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword()));
+        System.out.println("---------------------------");
+        
         // 2. Verificar contraseña
         if (!passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword())) {
             throw new BusinessException("Credenciales incorrectas");
