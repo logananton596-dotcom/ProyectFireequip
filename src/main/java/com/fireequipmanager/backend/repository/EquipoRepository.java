@@ -12,6 +12,8 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     boolean existsByNumeroSerieAndIdNot(String numeroSerie, Long id);
     boolean existsByCodigoInterno(String codigoInterno);
 
+    // NUEVO: Permite obtener la lista de equipos filtrada por el ID del Área
+    List<Equipo> findByAreaId(Long areaId);
     
     @Query("SELECT e.estadoEquipo.nombre, COUNT(e) FROM Equipo e GROUP BY e.estadoEquipo.nombre")
     List<Object[]> countByEstado();

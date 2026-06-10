@@ -64,4 +64,9 @@ public class Equipo {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    //ASIGNAR POR AREA
+    @ManyToOne
+    @JoinColumn(name = "area_id", nullable = false)
+    private Area area;
 }

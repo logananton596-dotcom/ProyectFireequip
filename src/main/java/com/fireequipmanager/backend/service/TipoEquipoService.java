@@ -5,6 +5,7 @@ import com.fireequipmanager.backend.model.TipoEquipo;
 import com.fireequipmanager.backend.repository.TipoEquipoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.fireequipmanager.backend.dto.TipoEquipoDTO;
 
 import java.util.List;
 
@@ -18,23 +19,51 @@ public class TipoEquipoService {
         this.repository = repository;
     }
 
-    public List<TipoEquipo> listarTodos() {
-        return repository.findAll();
+    public List<TipoEquipoDTO> listarTodos() {
+        return repository.findAll().stream()
+                .map(this::convertirAEntityADto)
+                .toList();
     }
 
-    public TipoEquipo crear(TipoEquipo tipo) {
-        if (tipo.getNombre() == null || tipo.getNombre().isBlank()) {
+    public TipoEquipoDTO crear(TipoEquipoDTO tipoDTO) {
+        if (tipoDTO.getNombre() == null || tipoDTO.getNombre().isBlank()) {
             throw new BusinessException("El nombre del tipo de equipo es obligatorio");
         }
-        // Asumiendo que tienes findByNombre en TipoEquipoRepository
-        if (repository.existsByNombre(tipo.getNombre())) {
-            throw new BusinessException("El tipo de equipo '" + tipo.getNombre() + "' ya existe");
+        
+        String nombreNormalizado = tipoDTO.getNombre().trim();
+
+        // Validar duplicidad
+        if (repository.existsByNombre(nombreNormalizado)) {
+            throw new BusinessException("El tipo de equipo '" + nombreNormalizado + "' ya existe");
         }
-        return repository.save(tipo);
+
+        // Mapear DTO a Entidad
+        TipoEquipo tipo = new TipoEquipo();
+        tipo.setNombre(nombreNormalizado);
+        tipo.setDescripcion(tipoDTO.getDescripcion());
+
+        TipoEquipo guardado = repository.save(tipo);
+        return convertirAEntityADto(guardado);
     }
-    public TipoEquipo buscarPorNombre(String nombre) {
-        return repository.findByNombre(nombre)
+
+    public TipoEquipoDTO buscarPorNombre(String nombre) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new BusinessException("El nombre de búsqueda no puede estar vacío");
+        }
+        
+        return repository.findByNombre(nombre.trim())
+                .map(this::convertirAEntityADto)
                 .orElseThrow(() -> new BusinessException("Tipo de equipo no encontrado: " + nombre));
     }
 
+    // ==========================================
+    // MÉTODO PRIVADO DE MAPEO
+    // ==========================================
+    private TipoEquipoDTO convertirAEntityADto(TipoEquipo tipo) {
+        TipoEquipoDTO dto = new TipoEquipoDTO();
+        dto.setId(tipo.getId());
+        dto.setNombre(tipo.getNombre());
+        dto.setDescripcion(tipo.getDescripcion());
+        return dto;
+    }
 }

@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import com.fireequipmanager.backend.service.MantenimientoService;
-import com.fireequipmanager.backend.model.Mantenimiento;
+import com.fireequipmanager.backend.dto.MantenimientoDTO;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/mantenimientos")
@@ -27,23 +28,24 @@ public class MantenimientoController {
     }
 
     // REGISTRAR INGRESO A MANTENIMIENTO
+    // @Valid asegura que campos como equipoId o tipo cumplan las restricciones configuradas
     @PostMapping
-    public ResponseEntity<Mantenimiento> registrar(@RequestBody Mantenimiento mantenimiento) {
+    public ResponseEntity<MantenimientoDTO> registrar(@Valid @RequestBody MantenimientoDTO mantenimientoDTO) {
         return new ResponseEntity<>(
-                mantenimientoService.registrarMantenimiento(mantenimiento), 
+                mantenimientoService.registrarMantenimiento(mantenimientoDTO), 
                 HttpStatus.CREATED
         );
     }
 
     // LISTAR HISTORIAL DE MANTENIMIENTOS POR EQUIPO
     @GetMapping("/equipo/{id}")
-    public ResponseEntity<List<Mantenimiento>> obtenerPorEquipo(@PathVariable Long id) {
+    public ResponseEntity<List<MantenimientoDTO>> obtenerPorEquipo(@PathVariable Long id) {
         return ResponseEntity.ok(mantenimientoService.obtenerPorEquipo(id));
     }
 
     // FINALIZAR MANTENIMIENTO Y PROGRAMAR PRÓXIMO
     @PostMapping("/{id}/finalizar")
-    public ResponseEntity<Mantenimiento> finalizar(
+    public ResponseEntity<MantenimientoDTO> finalizar(
             @PathVariable Long id, 
             @RequestParam(defaultValue = "6") int meses // Valor por defecto de 6 meses
     ) {

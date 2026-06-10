@@ -39,6 +39,21 @@ public class SecurityConfig {
                         // 3. Permisos para Usuarios (Solo Admin gestiona usuarios)
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         
+                        // BOMBEROS
+                        .requestMatchers("/api/bomberos/**")
+                        .hasAnyRole("ADMIN", "ENCARGADO")
+
+                        // ÁREAS
+                        .requestMatchers("/api/areas/**")
+                        .hasAnyRole("ADMIN", "ENCARGADO")
+
+                        // ASIGNACIONES
+                        .requestMatchers("/api/asignaciones/**")
+                        .hasAnyRole("ADMIN", "ENCARGADO")
+
+                        // MANTENIMIENTOS
+                        .requestMatchers("/api/mantenimientos/**")
+                        .hasAnyRole("ADMIN", "ENCARGADO")
                         // 4. Todo lo demás requiere estar logueado
                         .anyRequest().authenticated()
                 )

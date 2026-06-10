@@ -1,6 +1,7 @@
 package com.fireequipmanager.backend.service;
 
 import com.fireequipmanager.backend.exception.BusinessException;
+import com.fireequipmanager.backend.dto.UsuarioDTO;
 import com.fireequipmanager.backend.model.Rol;
 import com.fireequipmanager.backend.model.Usuario;
 import com.fireequipmanager.backend.repository.RolRepository;
@@ -15,6 +16,7 @@ import java.util.Optional;
 @Service
 @Transactional
 public class UsuarioService {
+
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
@@ -36,23 +38,24 @@ public class UsuarioService {
 
         // 2. Encriptar la contraseña antes de guardar
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
-        //usuario.setActivo(true);
 
         // 3. Asignar el Rol único (@ManyToOne)
-        // Si no se envía un nombre de rol, por defecto asignamos ROLE_USER
         String buscarRol = (nombreRol != null) ? nombreRol : "ROLE_USER";
         Rol rol = rolRepository.findByNombre(buscarRol)
                 .orElseThrow(() -> new BusinessException("El rol '" + buscarRol + "' no existe en la BD"));
         
-        usuario.setRol(rol); // Asignación directa según tu modelo
+        usuario.setRol(rol);
 
         return usuarioRepository.save(usuario);
     }
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
+    public List<UsuarioDTO> listarTodos() {
+        return usuarioRepository.findAll().stream()
+                .map(this::convertirAEntityADto)
+                .toList();
     }
 
+    // Se mantiene retornando Optional<Usuario> para compatibilidad nativa con Spring Security / JWT
     public Optional<Usuario> buscarPorUsername(String username) {
         return usuarioRepository.findByUsername(username);
     }
@@ -70,5 +73,22 @@ public class UsuarioService {
         
         usuario.setPassword(passwordEncoder.encode(nuevaPassword));
         usuarioRepository.save(usuario);
+    }
+    // ==========================================
+    // MÉTODO PRIVADO DE MAPEO
+    // ==========================================
+    private UsuarioDTO convertirAEntityADto(Usuario usuario) {
+        UsuarioDTO dto = new UsuarioDTO();
+        dto.setId(usuario.getId());
+        dto.setUsername(usuario.getUsername());
+        dto.setActivo(usuario.isActivo());
+        
+        // Se omite explícitamente setear el password por seguridad (nunca viaja en listas ni GETs)
+        
+        if (usuario.getRol() != null) {
+            dto.setRolId(usuario.getRol().getId());
+            dto.setRolNombre(usuario.getRol().getNombre());
+        }
+        return dto;
     }
 }

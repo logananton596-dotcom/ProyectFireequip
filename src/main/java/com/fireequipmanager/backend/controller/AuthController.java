@@ -1,5 +1,4 @@
 package com.fireequipmanager.backend.controller;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -9,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fireequipmanager.backend.dto.LoginRequest;
 import com.fireequipmanager.backend.dto.LoginResponse;
 import com.fireequipmanager.backend.exception.BusinessException;
 import com.fireequipmanager.backend.model.Usuario;
@@ -19,8 +19,6 @@ import com.fireequipmanager.backend.security.JwtUtil;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
-
     private final UsuarioService usuarioService;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
@@ -30,33 +28,34 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
     }
-
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody Usuario loginRequest) {
+    //public ResponseEntity<LoginResponse> login(@RequestBody Usuario loginRequest) 
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         // 1. Buscar usuario a través del servicio
-        Usuario usuario = usuarioService.buscarPorUsername(loginRequest.getUsername())
+        Usuario usuario = usuarioService.buscarPorUsername(request.getUsername())
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
         //  AGREGA ESTAS LÍNEAS DE AUDITORÍA:
         System.out.println("--- AUDITORÍA DE LOGIN ---");
-        System.out.println("Texto plano enviado desde Angular: [" + loginRequest.getPassword() + "]");
+        System.out.println("Texto plano enviado desde Angular: [" + request.getPassword() + "]");
         System.out.println("Hash recuperado de la Base de Datos: [" + usuario.getPassword() + "]");
-        System.out.println("¿Coinciden los valores?: " + passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword()));
+        System.out.println("¿Coinciden los valores?: " + passwordEncoder.matches(request.getPassword(), usuario.getPassword()));
         System.out.println("---------------------------");
         
         // 2. Verificar contraseña
-        if (!passwordEncoder.matches(loginRequest.getPassword(), usuario.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
             throw new BusinessException("Credenciales incorrectas");
-        }
+        }       
 
         // 3. Generar Token
         String token = jwtUtil.generarToken(usuario.getUsername());
 
         return ResponseEntity.ok(new LoginResponse(token));
     }
-
     @PostMapping("/register")
     public ResponseEntity<Usuario> register(@RequestBody Usuario usuario, @RequestParam(required = false) String rol) {
         // Usamos el servicio que ya maneja la encriptación y asignación de roles
         return ResponseEntity.ok(usuarioService.registrarUsuario(usuario, rol));
     }
+
+    
 }

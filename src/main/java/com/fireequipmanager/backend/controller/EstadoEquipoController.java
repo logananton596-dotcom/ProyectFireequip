@@ -1,10 +1,11 @@
 package com.fireequipmanager.backend.controller;
 
-import com.fireequipmanager.backend.model.EstadoEquipo;
 import com.fireequipmanager.backend.service.EstadoEquipoService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.fireequipmanager.backend.dto.EstadoEquipoDTO;
 
 import java.util.List;
 
@@ -19,18 +20,23 @@ public class EstadoEquipoController {
         this.service = service;
     }
 
+    // LISTAR TODOS LOS ESTADOS
     @GetMapping
-    public ResponseEntity<List<EstadoEquipo>> listar() {
+    public ResponseEntity<List<EstadoEquipoDTO>> listar() {
         return ResponseEntity.ok(service.listarTodos());
     }
 
+    // CREAR UN NUEVO ESTADO DE EQUIPO
+    // @Valid: Activa la validación del EstadoEquipoDTO antes de procesar el JSON
     @PostMapping
-    public ResponseEntity<EstadoEquipo> crear(@RequestBody EstadoEquipo estado) {
-        return new ResponseEntity<>(service.crear(estado), HttpStatus.CREATED);
-    }
-        @GetMapping("/buscar")
-    public ResponseEntity<EstadoEquipo> buscarPorNombre(@RequestParam String nombre) {
-        return ResponseEntity.ok(service.buscarPorNombre(nombre));
+    public ResponseEntity<EstadoEquipoDTO> crear(@Valid @RequestBody EstadoEquipoDTO estadoDTO) {
+        return new ResponseEntity<>(service.crear(estadoDTO), HttpStatus.CREATED);
     }
 
+    // BUSCAR ESTADO POR NOMBRE
+    // Ejemplo: GET /api/estados/buscar?nombre=OPERATIVO
+    @GetMapping("/buscar")
+    public ResponseEntity<EstadoEquipoDTO> buscarPorNombre(@RequestParam String nombre) {
+        return ResponseEntity.ok(service.buscarPorNombre(nombre));
+    }
 }

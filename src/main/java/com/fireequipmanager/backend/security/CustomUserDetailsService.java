@@ -36,7 +36,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 true, // accountNonExpired
                 true, // credentialsNonExpired
                 true, // accountNonLocked
-                List.of(new SimpleGrantedAuthority(usuario.getRol().getNombre()))
-        );
+                //List.of(new SimpleGrantedAuthority(usuario.getRol().getNombre()))
+                List.of(new SimpleGrantedAuthority( "ROLE_" +usuario.getRol().getNombre()))
+            );
     }
 }

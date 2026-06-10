@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.fireequipmanager.backend.exception.BusinessException;
+import com.fireequipmanager.backend.dto.MantenimientoDTO;
 import com.fireequipmanager.backend.model.Equipo;
 import com.fireequipmanager.backend.model.EstadoEquipo;
 import com.fireequipmanager.backend.model.Mantenimiento;
@@ -29,11 +30,9 @@ public class MantenimientoService {
         this.estadoRepository = estadoRepository;
     }
 
-
-
-    public Mantenimiento registrarMantenimiento(Mantenimiento mantenimiento) {
-        // 1. Validar equipo
-        Equipo equipo = equipoRepository.findById(mantenimiento.getEquipo().getId())
+ public MantenimientoDTO registrarMantenimiento(MantenimientoDTO dto) {
+        // 1. Validar equipo mediante el ID provisto por el DTO
+        Equipo equipo = equipoRepository.findById(dto.getEquipoId())
                 .orElseThrow(() -> new BusinessException("Equipo no encontrado"));
 
         // 2. Validar que el equipo no esté ya en mantenimiento o dado de baja
@@ -43,15 +42,23 @@ public class MantenimientoService {
         }
 
         // 3. Validar tipo de mantenimiento
-        if (mantenimiento.getTipo() == null || 
-           (!mantenimiento.getTipo().equalsIgnoreCase("PREVENTIVO") && 
-            !mantenimiento.getTipo().equalsIgnoreCase("CORRECTIVO"))) {
+        if (dto.getTipo() == null || 
+           (!dto.getTipo().equalsIgnoreCase("PREVENTIVO") && 
+            !dto.getTipo().equalsIgnoreCase("CORRECTIVO"))) {
             throw new BusinessException("El tipo debe ser PREVENTIVO o CORRECTIVO");
         }
 
-        // 4. Configurar fechas
-        if (mantenimiento.getFecha() == null) {
+        // 4. Mapear datos del DTO a una nueva Entidad
+        Mantenimiento mantenimiento = new Mantenimiento();
+        mantenimiento.setTipo(dto.getTipo().toUpperCase());
+        mantenimiento.setDescripcion(dto.getDescripcion());
+        mantenimiento.setResponsable(dto.getResponsable());
+
+        // Configurar fechas
+        if (dto.getFecha() == null) {
             mantenimiento.setFecha(LocalDate.now());
+        } else {
+            mantenimiento.setFecha(dto.getFecha());
         }
 
         // 5. Cambiar estado del equipo a EN_MANTENIMIENTO
@@ -62,10 +69,12 @@ public class MantenimientoService {
         equipoRepository.save(equipo);
 
         mantenimiento.setEquipo(equipo);
-        return mantenimientoRepository.save(mantenimiento);
+        Mantenimiento guardado = mantenimientoRepository.save(mantenimiento);
+        
+        return convertirAEntityADto(guardado);
     }
 
-    public Mantenimiento finalizarMantenimiento(Long mantenimientoId, int mesesParaProximo) {
+    public MantenimientoDTO finalizarMantenimiento(Long mantenimientoId, int mesesParaProximo) {
         Mantenimiento mantenimiento = mantenimientoRepository.findById(mantenimientoId)
                 .orElseThrow(() -> new BusinessException("Mantenimiento no encontrado"));
 
@@ -91,10 +100,36 @@ public class MantenimientoService {
         equipo.setEstadoEquipo(operativo);
         equipoRepository.save(equipo);
 
-        return mantenimientoRepository.save(mantenimiento);
+        Mantenimiento finalizado = mantenimientoRepository.save(mantenimiento);
+        return convertirAEntityADto(finalizado);
     }
 
-    public List<Mantenimiento> obtenerPorEquipo(Long equipoId) {
-        return mantenimientoRepository.findByEquipoId(equipoId);
+    public List<MantenimientoDTO> obtenerPorEquipo(Long equipoId) {
+        return mantenimientoRepository.findByEquipoId(equipoId).stream()
+                .map(this::convertirAEntityADto)
+                .toList();
     }
+
+    // ==========================================
+    // MÉTODO PRIVADO DE MAPEO
+    // ==========================================
+    private MantenimientoDTO convertirAEntityADto(Mantenimiento m) {
+        MantenimientoDTO dto = new MantenimientoDTO();
+        dto.setId(m.getId());
+        dto.setFecha(m.getFecha());
+        dto.setTipo(m.getTipo());
+        dto.setDescripcion(m.getDescripcion());
+        dto.setResponsable(m.getResponsable());
+        dto.setFechaProximo(m.getFechaProximo());
+        dto.setFechaFin(m.getFechaFin());
+
+        if (m.getEquipo() != null) {
+            dto.setEquipoId(m.getEquipo().getId());
+            dto.setEquipoCodigoInterno(m.getEquipo().getCodigoInterno());
+            dto.setEquipoNombre(m.getEquipo().getNombre());
+            dto.setEquipoMarca(m.getEquipo().getMarca());
+        }
+        return dto;
+    }
+
 }
