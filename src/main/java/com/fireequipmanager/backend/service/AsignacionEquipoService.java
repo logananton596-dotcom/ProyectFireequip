@@ -143,43 +143,58 @@ public class AsignacionEquipoService {
     // =========================================================================
     // MAPPER MANUAL: Une los datos de las 3 tablas en un JSON plano para el Front
     // =========================================================================
-    private AsignacionEquipoDTO convertirAEntityADto(AsignacionEquipo asignacion) {
-        AsignacionEquipoDTO dto = new AsignacionEquipoDTO();
-        dto.setId(asignacion.getId());
-        
-        // Atributos cruzados de la Entidad Equipo
-        Equipo equipo = asignacion.getEquipo();
+   private AsignacionEquipoDTO convertirAEntityADto(AsignacionEquipo asignacion) {
+    AsignacionEquipoDTO dto = new AsignacionEquipoDTO();
+    dto.setId(asignacion.getId());
+    
+    // 1. Blindaje Seguro para la Entidad Equipo
+    Equipo equipo = asignacion.getEquipo();
+    if (equipo != null) {
         dto.setEquipoId(equipo.getId());
         dto.setEquipoCodigoInterno(equipo.getCodigoInterno());
         dto.setEquipoNumeroSerie(equipo.getNumeroSerie());
         dto.setEquipoNombre(equipo.getNombre());
         dto.setEquipoMarca(equipo.getMarca());
-        dto.setTipoEquipoNombre(equipo.getTipoEquipo().getNombre()); // "detalles de para qué sirve"
+        
+        // Evita NullPointerException si el equipo no tiene asignado un tipo
+        if (equipo.getTipoEquipo() != null) {
+            dto.setTipoEquipoNombre(equipo.getTipoEquipo().getNombre());
+        } else {
+            dto.setTipoEquipoNombre("Sin Tipo Definido");
+        }
+    } else {
+        dto.setEquipoNombre("Equipo Eliminado/No encontrado");
+    }
 
-        // Atributos cruzados de la Entidad Bombero
-        Bombero bombero = asignacion.getBombero();
+    // 2. Blindaje Seguro para la Entidad Bombero
+    Bombero bombero = asignacion.getBombero();
+    if (bombero != null) {
         dto.setBomberoId(bombero.getId());
         dto.setBomberoCodigo(bombero.getCodigo());
         dto.setBomberoNombre(bombero.getNombre());
         dto.setBomberoGrado(bombero.getGrado());
-
-        // Atributos nativos de la entrega
-        dto.setTallaEquipo(asignacion.getTallaEquipo());
-        dto.setCaracteristicasEspecificas(asignacion.getCaracteristicasEspecificas());
-        dto.setFechaPuestaOperatividad(asignacion.getFechaPuestaOperatividad());
-        dto.setFechaCaducidad(asignacion.getFechaCaducidad());
-        dto.setEstadoFisicoEntrega(asignacion.getEstadoFisicoEntrega());
-        dto.setTipoMovimiento(asignacion.getTipoMovimiento());
-
-        // Atributos del Responsable de control
-        dto.setResponsableNombre(asignacion.getResponsableNombre());
-        dto.setResponsableCodigo(asignacion.getResponsableCodigo());
-        dto.setResponsableGrado(asignacion.getResponsableGrado());
-        dto.setResponsableCargo(asignacion.getResponsableCargo());
-        dto.setResponsableTelefono(asignacion.getResponsableTelefono());
-        
-        dto.setFechaHoraEntrega(asignacion.getFechaHoraEntrega());
-
-        return dto;
+    } else {
+        dto.setBomberoNombre("Bombero No Asignado u Huérfano");
     }
+
+    // 3. Atributos nativos de la entrega
+    dto.setTallaEquipo(asignacion.getTallaEquipo());
+    dto.setCaracteristicasEspecificas(asignacion.getCaracteristicasEspecificas());
+    dto.setFechaPuestaOperatividad(asignacion.getFechaPuestaOperatividad());
+    dto.setFechaCaducidad(asignacion.getFechaCaducidad());
+    dto.setEstadoFisicoEntrega(asignacion.getEstadoFisicoEntrega());
+    dto.setTipoMovimiento(asignacion.getTipoMovimiento());
+    
+    // Responsable
+    dto.setResponsableNombre(asignacion.getResponsableNombre());
+    dto.setResponsableCodigo(asignacion.getResponsableCodigo());
+    dto.setResponsableGrado(asignacion.getResponsableGrado());
+    dto.setResponsableCargo(asignacion.getResponsableCargo());
+    dto.setResponsableTelefono(asignacion.getResponsableTelefono());
+    
+    // Auditoría
+    dto.setFechaHoraEntrega(asignacion.getFechaHoraEntrega());
+
+    return dto;
+}
 }

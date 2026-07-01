@@ -10,7 +10,7 @@ import com.fireequipmanager.backend.dto.EstadoEquipoDTO;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/estados")
+@RequestMapping("/api/estados-equipo")
 @CrossOrigin(origins = "*")
 public class EstadoEquipoController {
 

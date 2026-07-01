@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/asignaciones")
+@RequestMapping("/api/asignacionesEquipos")
 @CrossOrigin(origins = "*") // Ajusta según la URL y puertos de tu frontend en desarrollo/producción
 public class AsignacionEquipoController {
 
