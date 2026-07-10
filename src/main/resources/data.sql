@@ -10,6 +10,11 @@ INSERT INTO estado_equipo (nombre) VALUES ('EN_MANTENIMIENTO');
 INSERT INTO estado_equipo (nombre) VALUES ('DADO_BAJA');
 INSERT INTO estado_equipo (nombre) VALUES ('FUERA_DE_SERVICIO');
 
+--INSERT INTO bombero (estado) VALUES ('ACTIVO');
+--INSERT INTO bombero (estado) VALUES ('RESERVA ');
+--INSERT INTO bombero (estado) VALUES ('BAJA');
+
+
 -- 3. INSERTAR TIPOS DE EQUIPO
 INSERT INTO tipo_equipo (nombre) VALUES ('Vehículo');
 INSERT INTO tipo_equipo (nombre) VALUES ('Herramienta Manual');

@@ -2,8 +2,9 @@ package com.fireequipmanager.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 @Data
 @Entity
 @Table(name = "Historial_Equipo")
@@ -23,5 +24,10 @@ public class EquipoHistorial {
 
     @ManyToOne
     private Equipo equipo;
+
+      //para dar de baja 
+    private String motivoBaja;
+    private String autorizadoPor;
+    private LocalDate fechaBaja;
 
 }

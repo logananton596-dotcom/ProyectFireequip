@@ -1,7 +1,7 @@
 package com.fireequipmanager.backend.repository;
 
-
 import com.fireequipmanager.backend.model.Bombero;
+import com.fireequipmanager.backend.model.enumsBombero.EstadoBombero;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -11,18 +11,31 @@ import java.util.Optional;
 @Repository
 public interface BomberoRepository extends JpaRepository<Bombero, Long> {
 
-    // 1. Clave para el formulario de asignación: Lista solo bomberos habilitados/activos
-    List<Bombero> findByActivoTrue();
+    // Lista bomberos por estado
+    List<Bombero> findByEstado(EstadoBombero estado);
 
-    // 2. Permite buscar un bombero por su código único (DNI o placa)
-    Optional<Bombero> findByCodigo(String codigo);
+    // Busca por código CGBVP
+    Optional<Bombero> findByCodigoCgbvp(String codigoCgbvp);
 
-    // 3. Regla de Negocio: Validar si ya existe el código antes de registrar un alta
-    boolean existsByCodigo(String codigo);
+    // Busca por DNI
+    Optional<Bombero> findByDni(String dni);
 
-    // 4. Regla de Negocio: Validar duplicados de código al actualizar los datos de un bombero
-    boolean existsByCodigoAndIdNot(String codigo, Long id);
+    // Valida código CGBVP duplicado
+    boolean existsByCodigoCgbvp(String codigoCgbvp);
 
-    // 5. Utilidad extra: Buscar bomberos por nombre (para buscadores dinámicos en el frontend)
-    List<Bombero> findByNombreContainingIgnoreCaseAndActivoTrue(String nombre);
+    // Valida código CGBVP al actualizar
+    boolean existsByCodigoCgbvpAndIdNot(String codigoCgbvp, Long id);
+
+    // Valida DNI duplicado
+    boolean existsByDni(String dni);
+
+    // Valida DNI al actualizar
+    boolean existsByDniAndIdNot(String dni, Long id);
+
+    // Busca por nombre y estado
+    List<Bombero> findByNombreContainingIgnoreCaseAndEstado(
+            String nombre,
+            EstadoBombero estado
+    );
+
 }

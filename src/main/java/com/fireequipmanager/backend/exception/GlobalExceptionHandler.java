@@ -4,6 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -45,4 +48,49 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleValidationException(
+        MethodArgumentNotValidException ex) {
+
+    Map<String, Object> response = new HashMap<>();
+
+    response.put("timestamp", LocalDateTime.now());
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+
+    Map<String, String> errors = new HashMap<>();
+
+    ex.getBindingResult().getFieldErrors()
+            .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+
+    response.put("errors", errors);
+
+    return ResponseEntity.badRequest().body(response);
+}
+        
+@ExceptionHandler(HttpMessageNotReadableException.class)
+public ResponseEntity<Map<String, Object>> handleInvalidEnum(
+        HttpMessageNotReadableException ex) {
+
+    Map<String, Object> response = new HashMap<>();
+
+    response.put("timestamp", LocalDateTime.now());
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+    response.put("message", "Uno o más valores enviados no son válidos.");
+
+    return ResponseEntity.badRequest().body(response);
+}
+
+@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+public ResponseEntity<Map<String, Object>> handleTypeMismatch(
+        MethodArgumentTypeMismatchException ex) {
+
+    Map<String, Object> response = new HashMap<>();
+
+    response.put("timestamp", LocalDateTime.now());
+    response.put("status", HttpStatus.BAD_REQUEST.value());
+    response.put("message", "Valor inválido para el parámetro: " + ex.getName());
+
+    return ResponseEntity.badRequest().body(response);
+}
 }

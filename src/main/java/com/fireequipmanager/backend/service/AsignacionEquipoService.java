@@ -73,20 +73,19 @@ public class AsignacionEquipoService {
                 .orElseThrow(() -> new BusinessException("El Bombero especificado no existe"));
 
         // Regra de Negocio: No asignar equipos a bomberos inactivos (de baja)
-        if (!bombero.isActivo()) {
-            throw new BusinessException("No se puede asignar equipamiento a un bombero que no está en estado ACTIVO");
+        if (bombero.getEstado() == null || !"ACTIVO".equalsIgnoreCase(bombero.getEstado().name())) {
+            throw new BusinessException("No se puede asignar equipamiento a un bombero que no está en estado ACTIVO. Estado actual: " + bombero.getEstado());
         }
 
         // Regla de Negocio: Evitar re-asignar un equipo que ya está ocupado (Opcional)
-        if (equipo.getEstadoEquipo().getNombre().equalsIgnoreCase("ASIGNADO")) {
+        if (equipo.getEstadoEquipo() != null && equipo.getEstadoEquipo().getNombre().equalsIgnoreCase("ASIGNADO")) {
             throw new BusinessException("Este equipo ya se encuentra asignado a otro bombero");
         }
 
-          // =========================================================================
-        // NUEVO: CAMBIAR EL ESTADO DEL EQUIPO A "ASIGNADO"
-        // =========================================================================
+        // CAMBIAR EL ESTADO DEL EQUIPO A "ASIGNADO"
         EstadoEquipo estadoAsignado = estadoEquipoRepository.findByNombre("ASIGNADO")
                 .orElseThrow(() -> new BusinessException("El estado 'ASIGNADO' no está configurado en el sistema"));
+        
         
         equipo.setEstadoEquipo(estadoAsignado);
         equipoRepository.save(equipo); // Actualiza el equipo en la BD
@@ -121,10 +120,7 @@ public class AsignacionEquipoService {
 
         // 2. Recuperar el equipo asociado a esta asignación
         Equipo equipo = asignacion.getEquipo();
-
-        // =========================================================================
         // PROCESO INVERSO: CAMBIAR EL ESTADO DEL EQUIPO A "DISPONIBLE"
-        // =========================================================================
         // Buscamos el estado 'DISPONIBLE' en la tabla estado_equipo
         EstadoEquipo estadoDisponible = estadoEquipoRepository.findByNombre("DISPONIBLE")
                 .orElseThrow(() -> new BusinessException("El estado 'DISPONIBLE' no está configurado en el sistema"));
@@ -134,19 +130,13 @@ public class AsignacionEquipoService {
         
         // Guardamos el cambio del equipo en la base de datos
         equipoRepository.save(equipo);
-        // =========================================================================
-
         // 3. Finalmente, procedemos a borrar físicamente el registro de la asignación
         asignacionRepository.delete(asignacion);
     }
-
-    // =========================================================================
     // MAPPER MANUAL: Une los datos de las 3 tablas en un JSON plano para el Front
-    // =========================================================================
    private AsignacionEquipoDTO convertirAEntityADto(AsignacionEquipo asignacion) {
     AsignacionEquipoDTO dto = new AsignacionEquipoDTO();
     dto.setId(asignacion.getId());
-    
     // 1. Blindaje Seguro para la Entidad Equipo
     Equipo equipo = asignacion.getEquipo();
     if (equipo != null) {
@@ -155,7 +145,6 @@ public class AsignacionEquipoService {
         dto.setEquipoNumeroSerie(equipo.getNumeroSerie());
         dto.setEquipoNombre(equipo.getNombre());
         dto.setEquipoMarca(equipo.getMarca());
-        
         // Evita NullPointerException si el equipo no tiene asignado un tipo
         if (equipo.getTipoEquipo() != null) {
             dto.setTipoEquipoNombre(equipo.getTipoEquipo().getNombre());
@@ -170,9 +159,9 @@ public class AsignacionEquipoService {
     Bombero bombero = asignacion.getBombero();
     if (bombero != null) {
         dto.setBomberoId(bombero.getId());
-        dto.setBomberoCodigo(bombero.getCodigo());
+        dto.setBomberoCodigo(bombero.getCodigoCgbvp()); 
         dto.setBomberoNombre(bombero.getNombre());
-        dto.setBomberoGrado(bombero.getGrado());
+        dto.setBomberoGrado(bombero.getGrado() != null ? bombero.getGrado().name() : null);
     } else {
         dto.setBomberoNombre("Bombero No Asignado u Huérfano");
     }

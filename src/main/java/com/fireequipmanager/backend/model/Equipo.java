@@ -9,7 +9,7 @@ import lombok.AllArgsConstructor;
 @Entity
 @Table(name = "equipo", uniqueConstraints = {
         @UniqueConstraint(columnNames = "numeroSerie"),
-        @UniqueConstraint(columnNames = "codigoInterno")
+        @UniqueConstraint(columnNames = "codigoInternoCGBVP")
 })
 @Data
 @NoArgsConstructor
@@ -22,34 +22,32 @@ public class Equipo {
 
     @Column(nullable = false)
     private String codigoInterno;
-
     @Column(nullable = false)
     private String numeroSerie;
 
     @Column(nullable = false)
     private String nombre;
-
     private String marca;
     private String modelo;
 
     private LocalDate fechaCompra;
-
     private Integer vidaUtilAnios;
-
     private String ubicacionActual;
 
     @ManyToOne
     @JoinColumn(name = "tipo_id", nullable = false)
     private TipoEquipo tipoEquipo;
-
     @ManyToOne
     @JoinColumn(name = "estado_id", nullable = false)
     private EstadoEquipo estadoEquipo;
 
+ 
+ 
     //para dar de baja 
     private String motivoBaja;
     private String autorizadoPor;
     private LocalDate fechaBaja;
+
 
 
     //para seguir un historial
@@ -69,4 +67,5 @@ public class Equipo {
     @ManyToOne
     @JoinColumn(name = "area_id", nullable = false)
     private Area area;
+
 }
