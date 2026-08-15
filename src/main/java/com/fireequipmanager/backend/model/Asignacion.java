@@ -1,44 +1,115 @@
 package com.fireequipmanager.backend.model;
-import java.time.LocalDateTime;
-import jakarta.persistence.Entity; 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-// Anotaciones de Lombok
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
+
+import com.fireequipmanager.backend.model.enumsAsignacion.EstadoAsignacion;
+import com.fireequipmanager.backend.model.enumsAsignacion.TipoDestinoAsignacion;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-@Getter // Genera automáticamente todos los getters
-@Setter // Genera automáticamente todos los setters
-@NoArgsConstructor // Genera constructor vacío (obligatorio para JPA)
-@AllArgsConstructor // Genera constructor con todos los campos (opcional pero útil)
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 @Entity
-@Table(name = "asignacion")
+@Table(name = "asignaciones")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Asignacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Relación con equipo
-    @ManyToOne
-    @JoinColumn(name = "equipo_id", nullable = false)
+    // Equipo asignado
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "equipo_id")
     private Equipo equipo;
 
-    // Tipo de asignación: ESTACION, VEHICULO, BOMBERO
-    private String tipoAsignacion;
+    // EPP asignado
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "epp_id")
+    private Epp epp;
 
-    // Identificador del destino (nombre o ID)
-    private String destino;
+    // Tipo de destino
+    @Enumerated(EnumType.STRING)
+    @Column(
+            nullable = false,
+            length = 20
+    )
+    private TipoDestinoAsignacion tipoDestino;
 
-    // Fecha inicio
-    private LocalDateTime fechaInicio;
+    // Bombero destinatario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bombero_id")
+    private Bombero bombero;
 
-    // Fecha fin (null = asignación activa)
-    private LocalDateTime fechaFin;
+    // Vehículo destinatario
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vehiculo_id")
+    private Vehiculo vehiculo;
 
+    // Ubicación física destinataria
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ubicacion_id")
+    private Ubicacion ubicacion;
+
+    // Fecha en que se realizó la asignación
+    @Column(nullable = false)
+    private LocalDate fechaAsignacion;
+
+    // Fecha de devolución
+    private LocalDate fechaDevolucion;
+
+    // Fecha límite de la asignación
+    private LocalDate fechaFin;
+
+    // Estado de la asignación
+    @Enumerated(EnumType.STRING)
+    @Column(
+            nullable = false,
+            length = 20
+    )
+    private EstadoAsignacion estado = EstadoAsignacion.ACTIVA;
+
+    // Observaciones
+    @Column(length = 500)
+    private String observaciones;
+
+    // Indica si la asignación está activa
+    @Column(nullable = false)
+    private Boolean activo = true;
+
+    // Auditoría
+    @Column(
+            updatable = false,
+            nullable = false
+    )
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "compartimiento_id")
+    private CompartimientoVehiculo compartimiento;
+
+    @PrePersist
+    public void prePersist() {
+
+        createdAt = LocalDateTime.now();
+
+        if (estado == null) {
+            estado = EstadoAsignacion.ACTIVA;
+        }
+
+        if (activo == null) {
+            activo = true;
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+
+        updatedAt = LocalDateTime.now();
+    }
 }

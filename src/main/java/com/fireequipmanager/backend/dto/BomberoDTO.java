@@ -5,7 +5,7 @@ import com.fireequipmanager.backend.model.enumsBombero.GradoBombero;
 import com.fireequipmanager.backend.model.enumsBombero.TipoSangre;
 import com.fireequipmanager.backend.model.enumsBombero.TipoCargo;
 import com.fireequipmanager.backend.model.enumsBombero.TipoVehiculoLicencia;
-import com.fireequipmanager.backend.model.enumsBombero.CompañiasBombero;
+import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -34,7 +34,7 @@ public class BomberoDTO {
 
     // Compañía del bombero
     @NotNull(message = "La compañía es obligatoria")
-    private CompañiasBombero compania;
+    private CompaniasBombero compania;
 
     // Fecha de incorporación
     @NotNull(message = "La fecha de incorporación es obligatoria")

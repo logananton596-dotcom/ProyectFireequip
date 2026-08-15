@@ -1,39 +1,97 @@
 package com.fireequipmanager.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.fireequipmanager.backend.model.enumsAsignacion.EstadoAsignacion;
+import com.fireequipmanager.backend.model.enumsAsignacion.TipoDestinoAsignacion;
+import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
+
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
+
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AsignacionDTO {
 
-    // Se genera en la respuesta (al crear viaja como null)
     private Long id;
-    private Long usoEmergenciaId; 
-    // El cliente envía solo el ID del equipo al crear/editar
-    @NotNull(message = "El ID del equipo es obligatorio")
+
+    // =========================================================
+    // RECURSO
+    // =========================================================
+
+    // ID del equipo
     private Long equipoId;
 
-    // El servidor llena estos campos del equipo solo para las respuestas (GET/POST)
-    private String equipoCodigoInterno;
-    private String equipoNombre;
+    // Información del equipo para respuestas
+    private EquipoDTO equipo;
 
-    // Tipo de asignación: ESTACION, VEHICULO, BOMBERO
-    @NotBlank(message = "El tipo de asignación es obligatorio")
-    private String tipoAsignacion;
+    // ID del EPP
+    private Long eppId;
 
-    // Identificador del destino (nombre de la estación, unidad móvil o bombero)
-    @NotBlank(message = "El destino de la asignación es obligatorio")
-    private String destino;
+    // Información del EPP para respuestas
+    private EppDTO epp;
 
-    // Fecha de inicio (puedes validarla o dejar que el service use LocalDateTime.now() si viene null)
-    private LocalDateTime fechaInicio;
+    // =========================================================
+    // DESTINO
+    // =========================================================
 
-    // Fecha fin (permanece null si la asignación está activa)
-    private LocalDateTime fechaFin;
-}
+    @NotNull(message = "Debe seleccionar el tipo de destino")
+    private TipoDestinoAsignacion tipoDestino;
+
+    // Bombero
+    private Long bomberoId;
+
+    private BomberoDTO bombero;
+
+    // Vehículo
+    private Long vehiculoId;
+
+    private VehiculoDTO vehiculo;
+
+    // Ubicación física
+    private Long ubicacionId;
+
+    private String codigoUbicacion;
+
+    private NombreUbicacion nombreUbicacion;
+
+    private UbicacionDTO ubicacion;
+
+    // =========================================================
+    // FECHAS
+    // =========================================================
+
+    @NotNull(message = "La fecha de asignación es obligatoria")
+    private LocalDate fechaAsignacion;
+
+    private LocalDate fechaDevolucion;
+
+    private LocalDate fechaFin;
+
+    // =========================================================
+    // ESTADO
+    // =========================================================
+
+    @NotNull(message = "Debe seleccionar el estado de la asignación")
+    private EstadoAsignacion estado;
+
+    // =========================================================
+    // INFORMACIÓN ADICIONAL
+    // =========================================================
+
+    @Size(
+            max = 500,
+            message = "Las observaciones no pueden superar los 500 caracteres"
+    )
+    private String observaciones;
+
+    private Boolean activo;
+
+    private Long compartimientoId;
+
+    private CompartimientoVehiculoDTO compartimiento;
+    }

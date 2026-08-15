@@ -1,295 +1,240 @@
 package com.fireequipmanager.backend.service;
 
 import com.fireequipmanager.backend.dto.EquipoDTO;
-import com.fireequipmanager.backend.dto.EquipoHistorialDTO;
+import com.fireequipmanager.backend.exception.BusinessException;
 import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Equipo;
-import com.fireequipmanager.backend.model.EquipoHistorial;
-import com.fireequipmanager.backend.model.EstadoEquipo;
-import com.fireequipmanager.backend.model.TipoEquipo;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
+import com.fireequipmanager.backend.model.enumsEquipo.TipoInventario;
 import com.fireequipmanager.backend.repository.AreaRepository;
-import com.fireequipmanager.backend.repository.EquipoHistorialRepository;
 import com.fireequipmanager.backend.repository.EquipoRepository;
-import com.fireequipmanager.backend.repository.EstadoEquipoRepository;
-import com.fireequipmanager.backend.repository.TipoEquipoRepository;
-import com.fireequipmanager.backend.exception.*;
-import jakarta.transaction.Transactional;
-import org.springframework.stereotype.Service;
+import com.fireequipmanager.backend.service.rules.EstadoInventarioRule;
+import com.fireequipmanager.backend.service.rules.InventarioRule;
+import com.fireequipmanager.backend.service.rules.StockRule;
+import com.fireequipmanager.backend.service.rules.VidaUtilRule;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.HashMap;
+import jakarta.transaction.Transactional;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import java.util.Objects;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Transactional
 public class EquipoService {
 
-    private final EquipoRepository equipoRepository;
-    private final EquipoHistorialRepository historialRepository; 
-    private final EstadoEquipoRepository estadoEquipoRepository;
-    private final TipoEquipoRepository tipoEquipoRepository;
-    private final AreaRepository areaRepository; 
+private final EquipoRepository equipoRepository;
+private final AreaRepository areaRepository;
+public EquipoService(
+        EquipoRepository equipoRepository,
+        AreaRepository areaRepository) 
+        {
+    this.equipoRepository = equipoRepository;
+    this.areaRepository = areaRepository;
+}
+
+    // Lista todos los equipos
+public List<EquipoDTO> listarTodos() {
+    return equipoRepository.findAll()
+            .stream()
+            .map(this::entityToDto)
+            .toList();
+}
+// Busca un equipo por ID
+public EquipoDTO buscarPorId(@NonNull Long id) {
+    return entityToDto(obtenerEquipo(id));
+}
+    // Registra un nuevo equipo
+
+public EquipoDTO crearEquipo(@NonNull EquipoDTO dto) {
+
+    InventarioRule.validarInventario(
+            dto.getTipoInventario(),
+            dto.getCodigoCgbvp(),
+            dto.getNumeroSerie(),
+            dto.getStock()
+    );
+   EstadoInventarioRule.validarEstado(
+        dto.getEstado(),
+        dto.getFechaBaja(),
+        dto.getMotivoBaja(),
+        "BAJA"
+);
+    validarDuplicados(dto,null);
+    Area area = obtenerArea(Objects.requireNonNull(dto.getNombreArea(), "El área no puede ser nula"));
+    Equipo equipo = dtoToEntity(dto);
+    equipo.setArea(area);
+    equipo.setAsignado(false);
+    return entityToDto(
+            equipoRepository.save(equipo)
+    );
+}
+
+    // Actualiza un equipo
+public EquipoDTO actualizarEquipo(
+        @NonNull Long id,
+        @NonNull EquipoDTO dto) {
+
+    Equipo equipo = obtenerEquipo(id);
+    validarDuplicados(dto, id);
+    InventarioRule.validarInventario(
+            dto.getTipoInventario(),
+            dto.getCodigoCgbvp(),
+            dto.getNumeroSerie(),
+            dto.getStock()
+    );
+    EstadoInventarioRule.validarEstado(
+        dto.getEstado(),
+        dto.getFechaBaja(),
+        dto.getMotivoBaja(),
+        "BAJA"
+);
+    actualizarDatos(equipo, dto);
+equipo.setArea(obtenerArea(Objects.requireNonNull(dto.getNombreArea(), "El área es obligatoria")));
+    return entityToDto(
+            equipoRepository.save(equipo)
+    );
+}
+
+    // Elimina un equipo
+public void eliminar(@NonNull Long id) {
     
-    public EquipoService(EquipoRepository equipoRepository, 
-                         EquipoHistorialRepository historialRepository,
-                         EstadoEquipoRepository estadoEquipoRepository,
-                         TipoEquipoRepository tipoEquipoRepository,
-                         AreaRepository areaRepository) {
-        this.equipoRepository = equipoRepository;
-        this.historialRepository = historialRepository;
-        this.estadoEquipoRepository = estadoEquipoRepository;
-        this.tipoEquipoRepository = tipoEquipoRepository;
-        this.areaRepository = areaRepository;
+    Equipo equipo = obtenerEquipo(id);
+    validarEliminacion(equipo);
+    equipoRepository.delete(Objects.requireNonNull(equipo, "El equipo a eliminar no puede ser nulo"));
+}
+
+    // VALIDACIONES
+    // Valida duplicados solo cuando existe el dato
+private void validarDuplicados(
+        EquipoDTO dto,
+        Long id) {
+    if (dto.getTipoInventario() != TipoInventario.INDIVIDUAL) {
+        return;
     }
-
-    public List<EquipoDTO> listarTodos() {
-        return equipoRepository.findAll().stream()
-                .map(this::convertirAEntityADto)
-                .toList();
+    if (id == null) {
+        if (equipoRepository.existsByCodigoCgbvp(dto.getCodigoCgbvp())) {
+            throw new BusinessException(
+                    "El código CGBVP ya existe");
+        }
+        if (equipoRepository.existsByNumeroSerie(dto.getNumeroSerie())) {
+            throw new BusinessException(
+                    "El número de serie ya existe");
+        }
+        return;
     }
-
-    public EquipoDTO buscarPorId(Long id) {
-        return equipoRepository.findById(id)
-                .map(this::convertirAEntityADto)
-                .orElseThrow(() -> new BusinessException("Equipo no encontrado"));
+    if (equipoRepository.existsByCodigoCgbvpAndIdNot(
+            dto.getCodigoCgbvp(), id)) {
+        throw new BusinessException(
+                "El código CGBVP pertenece a otro equipo");
     }
-
-    public void eliminar(Long id) {
-        if (!equipoRepository.existsById(id)) {
-            throw new BusinessException("El equipo a eliminar no existe");
-        }
-        equipoRepository.deleteById(id);
-    }
-
-    public List<EquipoDTO> equiposPorVencer() {
-        return equipoRepository.findAll().stream()
-                .filter(e -> {
-                    if (e.getFechaCompra() == null || e.getVidaUtilAnios() == null) return false;
-
-                    LocalDate fechaVencimiento = e.getFechaCompra()
-                            .plusYears(e.getVidaUtilAnios());
-
-                    return fechaVencimiento.minusDays(30).isBefore(LocalDate.now());
-                })
-                .map(this::convertirAEntityADto)
-                .toList();
-    }
-
-    public EquipoDTO crearEquipo(EquipoDTO equipoDTO) {
-        // RN-01: numeroSerie único
-        if (equipoRepository.existsByNumeroSerie(equipoDTO.getNumeroSerie())) {
-            throw new BusinessException("El número de serie ya existe");
-        }
-        // Buscar relaciones obligatorias en la BD
-        TipoEquipo tipo = tipoEquipoRepository.findById(equipoDTO.getTipoEquipoId())
-                .orElseThrow(() -> new BusinessException("El Tipo de Equipo especificado no existe"));
-
-        EstadoEquipo estado = estadoEquipoRepository.findByNombre(equipoDTO.getEstadoEquipoNombre())
-                .orElseThrow(() -> new BusinessException("El Estado de Equipo especificado no existe"));
-
-        Area area = areaRepository.findById(equipoDTO.getAreaId())
-            .orElseThrow(() -> new BusinessException("El Área especificada no existe"));
-
-        Equipo equipo = new Equipo();
-        equipo.setCodigoInterno(equipoDTO.getCodigoInterno());
-        equipo.setNumeroSerie(equipoDTO.getNumeroSerie());
-        equipo.setNombre(equipoDTO.getNombre());
-        equipo.setMarca(equipoDTO.getMarca());
-        equipo.setModelo(equipoDTO.getModelo());
-        equipo.setFechaCompra(equipoDTO.getFechaCompra());
-        equipo.setVidaUtilAnios(equipoDTO.getVidaUtilAnios());
-        equipo.setUbicacionActual(equipoDTO.getUbicacionActual());
-        equipo.setTipoEquipo(tipo);
-        equipo.setEstadoEquipo(estado);
-        equipo.setArea(area);
-
-        // Se guarda la entidad y se retorna convertida a DTO
-        Equipo guardado = equipoRepository.save(equipo);
-        return convertirAEntityADto(guardado);
-
-    }
-
-    public EquipoDTO actualizarEquipo(Long id, EquipoDTO equipoActualizadoDto, String username) {
-        Equipo equipo = equipoRepository.findById(id)
-                .orElseThrow(() -> new BusinessException("Equipo no encontrado"));
-
-        // RN-01: validar duplicado en update
-        if (equipoRepository.existsByNumeroSerieAndIdNot(equipoActualizadoDto.getNumeroSerie(), id)) {
-            throw new BusinessException("El número de serie ya existe");
-        }
-
-        // Buscar las nuevas instancias de las relaciones
-        TipoEquipo nuevoTipo = tipoEquipoRepository.findById(equipoActualizadoDto.getTipoEquipoId())
-                .orElseThrow(() -> new BusinessException("El Tipo de Equipo especificado no existe"));
-
-        EstadoEquipo nuevoEstado = estadoEquipoRepository.findByNombre(equipoActualizadoDto.getEstadoEquipoNombre())
-                .orElseThrow(() -> new BusinessException("El Estado de Equipo especificado no existe"));
-        
-        Area nuevaArea = areaRepository.findById(equipoActualizadoDto.getAreaId())
-            .orElseThrow(() -> new BusinessException("El Área especificada no existe"));
-
-        // RN-03: transición de estado
-        validarTransicionEstado(equipo.getEstadoEquipo(), nuevoEstado);
-
-        // Temporal para validación de vida útil
-        Equipo temporalValidacion = new Equipo();
-        temporalValidacion.setFechaCompra(equipoActualizadoDto.getFechaCompra());
-        temporalValidacion.setVidaUtilAnios(equipoActualizadoDto.getVidaUtilAnios());
-        temporalValidacion.setEstadoEquipo(nuevoEstado);
-        
-        // RN-04: vida útil
-        validarVidaUtil(temporalValidacion);
-
-        // ACTUALIZACIÓN CON HISTORIAL
-        if (!equipo.getNombre().equals(equipoActualizadoDto.getNombre())) {
-            guardarHistorial(equipo, "nombre", equipo.getNombre(), equipoActualizadoDto.getNombre(), username);
-        }
-        if (!equipo.getEstadoEquipo().getId().equals(nuevoEstado.getId())) {
-            guardarHistorial(equipo, "estadoEquipo", equipo.getEstadoEquipo().getNombre(), nuevoEstado.getNombre(), username);
-        }
-
-        // Actualizar campos de la entidad original
-        equipo.setCodigoInterno(equipoActualizadoDto.getCodigoInterno());
-        equipo.setNombre(equipoActualizadoDto.getNombre());
-        equipo.setNumeroSerie(equipoActualizadoDto.getNumeroSerie());
-        equipo.setMarca(equipoActualizadoDto.getMarca());
-        equipo.setModelo(equipoActualizadoDto.getModelo());
-        equipo.setTipoEquipo(nuevoTipo);
-        equipo.setEstadoEquipo(nuevoEstado);
-        equipo.setArea(nuevaArea);
-        equipo.setFechaCompra(equipoActualizadoDto.getFechaCompra());
-        equipo.setVidaUtilAnios(equipoActualizadoDto.getVidaUtilAnios());
-        equipo.setUbicacionActual(equipoActualizadoDto.getUbicacionActual());
-
-        Equipo guardado = equipoRepository.save(equipo);
-        return convertirAEntityADto(guardado);
-    }
-
-    public void darDeBaja(Long id, String motivo, String autorizado) {
-            Equipo e = equipoRepository.findById(id)
-                    .orElseThrow(() -> new BusinessException("El equipo no existe"));
-    
-            if (motivo == null || motivo.trim().isEmpty() || autorizado == null || autorizado.trim().isEmpty()) {
-                throw new BusinessException("Motivo y autorización obligatorios");
-            }
-
-            e.setMotivoBaja(motivo);
-            e.setAutorizadoPor(autorizado);
-            e.setFechaBaja(LocalDate.now());
-
-            EstadoEquipo estadoBaja = estadoEquipoRepository.findByNombre("DADO_DE_BAJA")
-                    .orElseThrow(() -> new BusinessException("El estado DADO_DE_BAJA no está configurado en el sistema"));
-            
-            e.setEstadoEquipo(estadoBaja);
-            equipoRepository.save(e);
-        }
-
-        public Map<String, Long> reportePorEstado() {
-            Map<String, Long> map = new HashMap<>();
-            for (Object[] obj : equipoRepository.countByEstado()) {
-                map.put((String) obj[0], (Long) obj[1]);
-            }
-            return map;
-        }
-
-    // ==========================================
-    // MÉTODOS PRIVADOS DE APOYO Y MAPEO
-    // ==========================================
-
-    private EquipoDTO convertirAEntityADto(Equipo equipo) {
-        EquipoDTO dto = new EquipoDTO();
-        dto.setId(equipo.getId());
-        dto.setCodigoInterno(equipo.getCodigoInterno());
-        dto.setNumeroSerie(equipo.getNumeroSerie());
-        dto.setNombre(equipo.getNombre());
-        dto.setMarca(equipo.getMarca());
-        dto.setModelo(equipo.getModelo());
-        dto.setFechaCompra(equipo.getFechaCompra());
-        dto.setVidaUtilAnios(equipo.getVidaUtilAnios());
-        dto.setUbicacionActual(equipo.getUbicacionActual());
-        
-        // Mapear IDs y Nombres de las relaciones para evitar LazyInitializationException
-        if (equipo.getTipoEquipo() != null) {
-            dto.setTipoEquipoId(equipo.getTipoEquipo().getId());
-            dto.setTipoEquipoNombre(equipo.getTipoEquipo().getNombre());
-        }
-        if (equipo.getEstadoEquipo() != null) {
-            dto.setTipoEquipoNombre(equipo.getTipoEquipo().getNombre());       
-            dto.setEstadoEquipoNombre(equipo.getEstadoEquipo().getNombre());   
-        }
-        if (equipo.getArea() != null) {
-            dto.setAreaId(equipo.getArea().getId());
-            dto.setAreaNombre(equipo.getArea().getNombre());
-        }
-
-        dto.setMotivoBaja(equipo.getMotivoBaja());
-        dto.setAutorizadoPor(equipo.getAutorizadoPor());
-        dto.setFechaBaja(equipo.getFechaBaja());
-        dto.setCreatedAt(equipo.getCreatedAt());
-        dto.setUpdatedAt(equipo.getUpdatedAt());
-        return dto;
-    }
-
-    private void guardarHistorial(Equipo equipo, String campo, String oldVal, String newVal, String user) {
-        EquipoHistorial h = new EquipoHistorial();
-        h.setEquipo(equipo);
-        h.setCampoModificado(campo);
-        h.setValorAnterior(oldVal);
-        h.setValorNuevo(newVal);
-        h.setFechaCambio(LocalDateTime.now());
-        h.setUsuario(user != null ? user : "SISTEMA");
-
-        historialRepository.save(h);
-    }
-
-    public List<EquipoHistorialDTO> obtenerHistorial(Long equipoId) {
-        return historialRepository.findByEquipoId(equipoId).stream()
-                .map(h -> new EquipoHistorialDTO(
-                    h.getId(), h.getCampoModificado(), h.getValorAnterior(), 
-                    h.getValorNuevo(), h.getFechaCambio(), h.getUsuario(),
-                    h.getEquipo().getId(), h.getEquipo().getCodigoInterno(), h.getEquipo().getNombre()
-                )).toList();
-    }
-
-    private void validarTransicionEstado(EstadoEquipo actual, EstadoEquipo nuevo) {
-        // Verificamos que los objetos no sean nulos para evitar NullPointerException
-        if (actual == null || nuevo == null) return;
-
-        String nombreActual = actual.getNombre();
-        String nombreNuevo = nuevo.getNombre();
-
-        // Regla: No se puede pasar de DADO_BAJA a OPERATIVO
-        if (nombreActual.equals("DADO_BAJA") && nombreNuevo.equals("OPERATIVO")) {
-            throw new BusinessException("Regla de Negocio: No se puede pasar de baja a operativo directamente");
-        }
-        
-        // Regla: No se puede modificar un equipo que ya está DADO_BAJA
-        if (nombreActual.equals("DADO_DE_BAJA") || nombreActual.equals("DADO_BAJA")) {
-            throw new BusinessException("Regla de Negocio: No se puede modificar un equipo que ya está dado de baja");
-        }
-    }
-
-    private void validarVidaUtil(Equipo equipo) {
-        if (equipo.getFechaCompra() == null || equipo.getVidaUtilAnios() == null) {
-            return;
-        }
-
-        // Tu fórmula calcula el vencimiento sumando los años convertidos a meses
-        LocalDate fechaVencimiento = equipo.getFechaCompra()
-                .plusYears(equipo.getVidaUtilAnios());
-
-        boolean vencido = LocalDate.now().isAfter(fechaVencimiento);
-
-        if (vencido && equipo.getEstadoEquipo() != null && "OPERATIVO".equals(equipo.getEstadoEquipo().getNombre())) {
-            throw new BusinessException("El equipo está vencido y no puede estar en estado OPERATIVO");
-        }
-    }
-    public List<EquipoDTO> listarPorArea(Long areaId) {
-        return equipoRepository.findByAreaId(areaId).stream()
-                .map(this::convertirAEntityADto)
-                .toList();
+    if (equipoRepository.existsByNumeroSerieAndIdNot(
+            dto.getNumeroSerie(), id)) {
+        throw new BusinessException(
+                "El número de serie pertenece a otro equipo");
     }
 }
 
+private void completarIndicadores(
+        EquipoDTO dto,
+        Equipo equipo) {
+    VidaUtilRule.completarIndicadoresDeVidaUtil(dto, equipo);
+    StockRule.completarIndicadoresDeStock(dto, equipo);
+}
+    // Validaciones futuras
+private void validarEliminacion(Equipo equipo) {
+        // Validar asignaciones
+        // Validar mantenimientos
+        // Validar movimientos
+        if(Boolean.TRUE.equals(equipo.getAsignado())){
+
+        throw new BusinessException(
+            "No puede eliminar un equipo asignado.");
+    }
+    }
+
+    // OBTENER ENTIDADES
+
+    private Equipo obtenerEquipo(@NonNull Long id) {
+        return equipoRepository.findById(id)
+                .orElseThrow(() ->
+                        new BusinessException("Equipo no encontrado"));
+    }
+
+    private Area obtenerArea(@NonNull NombreArea nombreArea) {
+        return areaRepository.findByNombreArea(nombreArea)
+                .orElseThrow(() ->
+                        new BusinessException("Área no encontrada"));
+    }
+
+    // MAPPERS
+    private Equipo dtoToEntity(EquipoDTO dto) {
+        Equipo equipo = new Equipo();
+        actualizarDatos(equipo, dto);
+        return equipo;
+    }
+
+    private void actualizarDatos(Equipo equipo, EquipoDTO dto) {
+
+        equipo.setCodigoCgbvp(dto.getCodigoCgbvp());
+        equipo.setNumeroSerie(dto.getNumeroSerie());
+        equipo.setNombreEquipo(dto.getNombreEquipo());
+        equipo.setTipoEquipo(dto.getTipoEquipo());
+        equipo.setTipoInventario(dto.getTipoInventario());
+        equipo.setCompania(dto.getCompania());
+        equipo.setEstado(dto.getEstado());
+        equipo.setFechaIncorporacion(dto.getFechaIncorporacion());
+        equipo.setVidaUtilAnios(dto.getVidaUtilAnios());
+        equipo.setFechaBaja(dto.getFechaBaja());
+        equipo.setMotivoBaja(dto.getMotivoBaja());
+        equipo.setStock(dto.getStock());
+        equipo.setStockMinimo(dto.getStockMinimo());
+        equipo.setEspecificacion(dto.getEspecificacion());
+        equipo.setDescripcion(dto.getDescripcion()); 
+        equipo.setMaterial(dto.getMaterial());
+        equipo.setMarca(dto.getMarca());
+        equipo.setModelo(dto.getModelo());
+        equipo.setColor(dto.getColor());
+        equipo.setObservaciones(dto.getObservaciones());
+        equipo.setAsignado(dto.getAsignado());
+    }
+
+    private EquipoDTO entityToDto(Equipo equipo) {
+
+        EquipoDTO dto = new EquipoDTO(
+
+                equipo.getId(),
+                equipo.getCodigoCgbvp(),
+                equipo.getNumeroSerie(),
+                equipo.getNombreEquipo(),
+                equipo.getTipoEquipo(),
+                equipo.getTipoInventario(),
+                equipo.getCompania(),
+                equipo.getEstado(),
+                equipo.getFechaIncorporacion(),
+                equipo.getVidaUtilAnios(),
+                equipo.getFechaBaja(),
+                equipo.getMotivoBaja(),
+                equipo.getStock(),
+                equipo.getStockMinimo(),
+                equipo.getEspecificacion(),
+                equipo.getDescripcion(),
+                equipo.getMaterial(),
+                equipo.getMarca(),
+                equipo.getModelo(),
+                equipo.getColor(),
+                equipo.getObservaciones(),
+                equipo.getArea().getNombreArea(),
+                equipo.getAsignado(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+        completarIndicadores(dto, equipo);
+        return dto;
+    }
+}

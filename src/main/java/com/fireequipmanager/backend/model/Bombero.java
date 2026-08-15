@@ -5,7 +5,7 @@ import com.fireequipmanager.backend.model.enumsBombero.GradoBombero;
 import com.fireequipmanager.backend.model.enumsBombero.TipoSangre;
 import com.fireequipmanager.backend.model.enumsBombero.TipoCargo;
 import com.fireequipmanager.backend.model.enumsBombero.TipoVehiculoLicencia;
-import com.fireequipmanager.backend.model.enumsBombero.CompañiasBombero;
+import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,7 +38,7 @@ public class Bombero {
     // Compañía del bombero (temporalmente String)
     @Enumerated(EnumType.STRING)
     @Column(name = "compania", nullable = false)
-    private CompañiasBombero compania;
+    private CompaniasBombero compania;
 
     // Fecha de incorporación
     @Column(name = "fecha_incorporacion", nullable = false)
@@ -140,7 +140,21 @@ public class Bombero {
     private String motivoEstado;
 
     // Historial de asignaciones
-    @OneToMany(mappedBy = "bombero")
-    private List<AsignacionEquipo> asignaciones;
+    @OneToMany(mappedBy = "bombero", fetch = FetchType.LAZY)    
+    private List<Asignacion> asignaciones;
+
+         // RELACIÓN CON UBICACIÓN
+    // ==========================
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ubicacion_id")
+    private Ubicacion ubicacion;
+
+    //casillero
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "casillero_id")
+    private Casillero casillero;
+
+
+
 
 }

@@ -59,14 +59,14 @@ public class UsuarioService {
     public Optional<Usuario> buscarPorUsername(String username) {
         return usuarioRepository.findByUsername(username);
     }
-
+    @SuppressWarnings("null")
     public void cambiarEstado(Long id, boolean activo) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
         usuario.setActivo(activo);
         usuarioRepository.save(usuario);
     }
-
+    @SuppressWarnings("null")
     public void actualizarPassword(Long id, String nuevaPassword) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado"));
@@ -74,9 +74,8 @@ public class UsuarioService {
         usuario.setPassword(passwordEncoder.encode(nuevaPassword));
         usuarioRepository.save(usuario);
     }
-    // ==========================================
+
     // MÉTODO PRIVADO DE MAPEO
-    // ==========================================
     private UsuarioDTO convertirAEntityADto(Usuario usuario) {
         UsuarioDTO dto = new UsuarioDTO();
         dto.setId(usuario.getId());
