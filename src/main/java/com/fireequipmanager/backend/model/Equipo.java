@@ -1,5 +1,6 @@
 package com.fireequipmanager.backend.model;
 
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import com.fireequipmanager.backend.model.enumsEquipo.EstadoEquipo;
 import com.fireequipmanager.backend.model.enumsEquipo.NombreEquipo;
@@ -117,10 +118,10 @@ public class Equipo  implements VidaUtilEntity, StockEntity {
     @Column(nullable = false)
     private Boolean asignado = false;
 
-    // Área propietaria
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "area_id", nullable = false)
-    private Area area;
+
+    @Enumerated(EnumType.STRING) 
+    @Column(name = "area", nullable = false) 
+    private NombreArea area; 
 
     // Auditoría
     @Column(updatable = false)

@@ -10,6 +10,7 @@ import com.fireequipmanager.backend.dto.BienDTO;
 import com.fireequipmanager.backend.exception.BusinessException;
 import com.fireequipmanager.backend.model.Bien;
 import com.fireequipmanager.backend.model.Ubicacion;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.repository.BienRepository;
 import com.fireequipmanager.backend.repository.UbicacionRepository;
 
@@ -180,8 +181,7 @@ public class BienService {
             );
         }
 
-        if (dto.getArea() == null) {
-
+        if (dto.getNombreArea() == null) {
             throw new BusinessException(
                     "Debe seleccionar el área propietaria"
             );
@@ -194,6 +194,12 @@ public class BienService {
             );
         }
     }
+        public List<BienDTO> buscarPorArea(NombreArea area) {
+        return bienRepository.findByArea(area)
+                .stream()
+                .map(this::entityToDto)
+                .toList();
+        }
 
     // Valida que el código no esté duplicado
     private void validarCodigoDuplicado(
@@ -280,8 +286,7 @@ public class BienService {
         bien.setValorReferencial(dto.getValorReferencial());
         bien.setEspecificaciones(dto.getEspecificaciones());
         bien.setObservaciones(dto.getObservaciones());
-        bien.setArea(dto.getArea());
-
+        bien.setArea(dto.getNombreArea());
         if (dto.getActivo() != null) {
             bien.setActivo(dto.getActivo());
         }

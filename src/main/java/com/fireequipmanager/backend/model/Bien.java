@@ -100,12 +100,9 @@ public class Bien {
     private String observaciones;
 
     // Área propietaria del bien
-    @Enumerated(EnumType.STRING)
-    @Column(
-            nullable = false,
-            length = 50
-    )
-    private NombreArea area;
+    @Enumerated(EnumType.STRING) 
+    @Column(name = "area", nullable = false) 
+    private NombreArea area; 
 
     // Ubicación física actual del bien
     @ManyToOne(fetch = FetchType.LAZY)

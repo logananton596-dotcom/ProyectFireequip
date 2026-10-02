@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.fireequipmanager.backend.model.Bien;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsBien.EstadoBien;
 import com.fireequipmanager.backend.model.enumsBien.TipoBien;
 
@@ -36,4 +37,7 @@ public interface BienRepository extends JpaRepository<Bien, Long> {
 
     // Lista bienes asociados a una ubicación
     List<Bien> findByUbicacionId(Long ubicacionId);
+
+        // Filtrar por área
+    List<Bien> findByArea(NombreArea area);
 }

@@ -1,6 +1,7 @@
 package com.fireequipmanager.backend.controller;
 
 import com.fireequipmanager.backend.dto.EquipoDTO;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.service.EquipoService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -64,6 +65,11 @@ public class EquipoController {
         equipoService.eliminar(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/area/{area}")
+    public ResponseEntity<List<EquipoDTO>> listarPorArea(@PathVariable NombreArea area) {
+        return ResponseEntity.ok(equipoService.buscarPorArea(area));
     }
 
 }

@@ -1,7 +1,7 @@
 package com.fireequipmanager.backend.repository;
 
-import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Equipo;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import com.fireequipmanager.backend.model.enumsEquipo.EstadoEquipo;
 import com.fireequipmanager.backend.model.enumsEquipo.NombreEquipo;
@@ -49,7 +49,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     List<Equipo> findByNombreEquipo(NombreEquipo nombreEquipo);
 
     // Área
-    List<Equipo> findByArea(Area area);
+    List<Equipo> findByArea(NombreArea area);
 
     // Compañía
     List<Equipo> findByCompania(CompaniasBombero compania);
@@ -69,11 +69,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
     // List<Equipo> findByControlIndividual(Boolean controlIndividual);
 
     // FILTROS COMPUESTOS
-   
-    List<Equipo> findByEstadoAndArea(
-            EstadoEquipo estado,
-            Area area
-    );
+
 
     List<Equipo> findByNombreEquipoAndEstado(
             NombreEquipo nombreEquipo,
@@ -85,10 +81,6 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
             EstadoEquipo estado
     );
 
-    List<Equipo> findByAreaAndEstado(
-            Area area,
-            EstadoEquipo estado
-    );
 
     List<Equipo> findByCompaniaAndEstado(
             CompaniasBombero compania,

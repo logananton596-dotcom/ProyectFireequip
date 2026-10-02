@@ -7,10 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fireequipmanager.backend.dto.EppDTO;
 import com.fireequipmanager.backend.exception.BusinessException;
-import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Epp;
 import com.fireequipmanager.backend.model.enumsArea.NombreArea; 
-import com.fireequipmanager.backend.repository.AreaRepository;
 import com.fireequipmanager.backend.repository.EppRepository;
 import com.fireequipmanager.backend.service.rules.EstadoInventarioRule;
 import com.fireequipmanager.backend.service.rules.VidaUtilRule;
@@ -20,21 +18,15 @@ import org.springframework.lang.NonNull;
 @Transactional
 public class EppService {
     private final EppRepository eppRepository;
-    private final AreaRepository areaRepository;
-    public EppService(
-            EppRepository eppRepository,
-            AreaRepository areaRepository
+    public EppService(EppRepository eppRepository
             //stadoInventarioRule estadoInventarioRule,
             //VidaUtilRule vidaUtilRule
             ) 
             {
-
         this.eppRepository = eppRepository;
-        this.areaRepository = areaRepository;
     }
 // Lista todos los EPP
 public List<EppDTO> listarTodos() {
-
     return eppRepository.findAll()
             .stream()
             .map(this::entityToDto)
@@ -44,9 +36,7 @@ public List<EppDTO> listarTodos() {
 
 // Busca un EPP
 public EppDTO buscarPorId(@NonNull Long id) {
-
     return entityToDto(obtenerEpp(id));
-
 }
 
 // Registra un EPP
@@ -59,40 +49,26 @@ public EppDTO crearEpp(@NonNull EppDTO dto) {
             dto.getFechaBaja(),
             dto.getMotivoBaja(),
         "EPP");
-    Area area = obtenerArea(
-            Objects.requireNonNull(dto.getNombreArea()));
+    NombreArea nombreArea = Objects.requireNonNull(dto.getNombreArea(), "El área no puede ser nula");
     Epp epp = dtoToEntity(dto);
-
-    epp.setArea(area);
+    epp.setArea(nombreArea); 
     epp.setAsignado(false);
-
-    return entityToDto(
-            eppRepository.save(epp));
-
+    return entityToDto(eppRepository.save(epp));
 }
 
 // Actualiza un EPP
-public EppDTO actualizarEpp(
-        @NonNull Long id,
-        @NonNull EppDTO dto) {
-
+public EppDTO actualizarEpp(@NonNull Long id,@NonNull EppDTO dto) {
     Epp epp = obtenerEpp(id);
-
     Boolean asignadoActual = epp.getAsignado();
-
     validarDuplicados(dto, id);
-
     EstadoInventarioRule.validarEstado(
             dto.getEstado(),
             dto.getFechaBaja(),
             dto.getMotivoBaja(),
             "EPP");
-
     actualizarDatos(epp, dto);
-
-    epp.setArea(
-            obtenerArea(
-                    Objects.requireNonNull(dto.getNombreArea())));
+    NombreArea nombreArea = Objects.requireNonNull(dto.getNombreArea(), "El área no puede ser nula");
+    epp.setArea(nombreArea);
 
     if (dto.getAsignado() == null) {
         epp.setAsignado(asignadoActual);
@@ -115,86 +91,60 @@ private void validarDuplicados(
         Long id) {
 
     if (id == null) {
-
         if (eppRepository.existsByCodigoCgbvp(dto.getCodigoCgbvp())) {
-            throw new BusinessException(
-                    "El código CGBVP ya existe");
+            throw new BusinessException("El código CGBVP ya existe");
         }
-
         if (eppRepository.existsByNumeroSerie(dto.getNumeroSerie())) {
-            throw new BusinessException(
-                    "El número de serie ya existe");
+            throw new BusinessException("El número de serie ya existe");
         }
-
         return;
     }
-
     if (eppRepository.existsByCodigoCgbvpAndIdNot(
             dto.getCodigoCgbvp(),
             id)) {
-
-        throw new BusinessException(
-                "El código CGBVP pertenece a otro EPP");
+        throw new BusinessException("El código CGBVP pertenece a otro EPP");
     }
-
     if (eppRepository.existsByNumeroSerieAndIdNot(
             dto.getNumeroSerie(),
             id)) {
-
-        throw new BusinessException(
-                "El número de serie pertenece a otro EPP");
+        throw new BusinessException("El número de serie pertenece a otro EPP");
     }
 
+}
+public List<EppDTO> buscarPorArea(NombreArea area) {
+    return eppRepository.findByArea(area)
+            .stream()
+            .map(this::entityToDto)
+            .toList();
 }
 
 // Valida eliminación
 private void validarEliminacion(Epp epp) {
-
     // Validar asignaciones
     // Validar mantenimientos
     // Validar movimientos
-
     if (Boolean.TRUE.equals(epp.getAsignado())) {
-
-        throw new BusinessException(
-                "No puede eliminar un EPP asignado.");
+        throw new BusinessException("No puede eliminar un EPP asignado.");
     }
 
 }
 // Obtiene un EPP
 private Epp obtenerEpp(@NonNull Long id) {
-
     return eppRepository.findById(id)
             .orElseThrow(() ->
-                    new BusinessException(
-                            "EPP no encontrado"));
-
-}
-
-// Obtiene un área
-private Area obtenerArea(
-        @NonNull NombreArea nombreArea) {
-
-    return areaRepository.findByNombreArea(nombreArea)
-            .orElseThrow(() ->
-                    new BusinessException(
-                            "Área no encontrada"));
-
+                    new BusinessException( "EPP no encontrado"));
 }
 
 // Calcula indicadores automáticos
 private void completarIndicadores(
         EppDTO dto,
-        Epp epp) {
-    VidaUtilRule.completarIndicadoresDeVidaUtil(dto, epp);
+        Epp epp) {VidaUtilRule.completarIndicadoresDeVidaUtil(dto, epp);
 }
 // Convierte DTO a Entity
 private Epp dtoToEntity(EppDTO dto) {
 
     Epp epp = new Epp();
-
     actualizarDatos(epp, dto);
-
     return epp;
 
 }
@@ -241,20 +191,18 @@ private EppDTO entityToDto(Epp epp) {
             epp.getMarca(),
             epp.getColor(),
             epp.getObservaciones(),
-            epp.getArea().getNombreArea(),
+            epp.getArea(),
             epp.getAsignado(),
             // Indicadores (se calculan después)
             null,
             null,
             null,
-            null,            null,
+            null,
+            null,
             null,
             null
-
     );
-
     completarIndicadores(dto, epp);
-
     return dto;
 }
 }

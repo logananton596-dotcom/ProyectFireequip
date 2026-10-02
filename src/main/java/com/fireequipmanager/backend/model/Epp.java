@@ -2,6 +2,7 @@ package com.fireequipmanager.backend.model;
 
 import com.fireequipmanager.backend.model.enumsEpp.*;
 import com.fireequipmanager.backend.service.contracts.VidaUtilEntity;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -99,9 +100,10 @@ public class Epp  implements VidaUtilEntity {
     private Boolean activo = true;
 
     // Área propietaria del EPP
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "area_id", nullable = false)
-    private Area area;
+    @Enumerated(EnumType.STRING) 
+    @Column(name = "area", nullable = false) 
+    private NombreArea area; 
+
 
     // Fecha de creación
     @Column(updatable = false, nullable = false)

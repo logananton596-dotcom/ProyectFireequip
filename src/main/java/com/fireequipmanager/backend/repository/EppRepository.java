@@ -1,7 +1,7 @@
 package com.fireequipmanager.backend.repository;
 
-import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Epp;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsBombero.CompaniasBombero;
 import com.fireequipmanager.backend.model.enumsEpp.EstadoEpp;
 import com.fireequipmanager.backend.model.enumsEpp.NombreEpp;
@@ -52,7 +52,7 @@ public interface EppRepository extends JpaRepository<Epp, Long> {
     List<Epp> findByCompania(CompaniasBombero compania);
 
     // Filtrar por área
-    List<Epp> findByArea(Area area);
+    List<Epp> findByArea(NombreArea area);
 
     // Filtrar por asignación
     List<Epp> findByAsignado(Boolean asignado);
@@ -61,11 +61,6 @@ public interface EppRepository extends JpaRepository<Epp, Long> {
 
     List<Epp> findByNombreEppAndEstado(
             NombreEpp nombreEpp,
-            EstadoEpp estado
-    );
-
-    List<Epp> findByAreaAndEstado(
-            Area area,
             EstadoEpp estado
     );
 
@@ -79,10 +74,7 @@ public interface EppRepository extends JpaRepository<Epp, Long> {
             EstadoEpp estado
     );
 
-    List<Epp> findByAreaAndAsignado(
-            Area area,
-            Boolean asignado
-    );
+
 
 }
 

@@ -1,6 +1,7 @@
 package com.fireequipmanager.backend.controller;
 
 import com.fireequipmanager.backend.dto.EppDTO;
+import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.service.EppService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -76,5 +77,8 @@ public class EppController {
         return ResponseEntity.noContent().build();
 
     }
-
+    @GetMapping("/area/{area}")
+    public ResponseEntity<List<EppDTO>> listarPorArea(@PathVariable NombreArea area) {
+        return ResponseEntity.ok(eppService.buscarPorArea(area));
+    }
 }

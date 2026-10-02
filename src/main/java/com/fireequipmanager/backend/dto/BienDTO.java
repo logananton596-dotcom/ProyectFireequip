@@ -106,7 +106,7 @@ public class BienDTO {
 
     // Área propietaria
     @NotNull(message = "Debe seleccionar el área propietaria")
-    private NombreArea area;
+    private NombreArea nombreArea;
 
     // =========================================================
     // UBICACIÓN

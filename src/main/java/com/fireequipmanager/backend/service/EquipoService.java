@@ -2,11 +2,9 @@ package com.fireequipmanager.backend.service;
 
 import com.fireequipmanager.backend.dto.EquipoDTO;
 import com.fireequipmanager.backend.exception.BusinessException;
-import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Equipo;
 import com.fireequipmanager.backend.model.enumsArea.NombreArea;
 import com.fireequipmanager.backend.model.enumsEquipo.TipoInventario;
-import com.fireequipmanager.backend.repository.AreaRepository;
 import com.fireequipmanager.backend.repository.EquipoRepository;
 import com.fireequipmanager.backend.service.rules.EstadoInventarioRule;
 import com.fireequipmanager.backend.service.rules.InventarioRule;
@@ -24,13 +22,8 @@ import java.util.List;
 public class EquipoService {
 
 private final EquipoRepository equipoRepository;
-private final AreaRepository areaRepository;
-public EquipoService(
-        EquipoRepository equipoRepository,
-        AreaRepository areaRepository) 
-        {
+public EquipoService(EquipoRepository equipoRepository) {
     this.equipoRepository = equipoRepository;
-    this.areaRepository = areaRepository;
 }
 
     // Lista todos los equipos
@@ -61,13 +54,11 @@ public EquipoDTO crearEquipo(@NonNull EquipoDTO dto) {
         "BAJA"
 );
     validarDuplicados(dto,null);
-    Area area = obtenerArea(Objects.requireNonNull(dto.getNombreArea(), "El área no puede ser nula"));
+    NombreArea nombreArea = Objects.requireNonNull(dto.getNombreArea(), "El área no puede ser nula");
     Equipo equipo = dtoToEntity(dto);
-    equipo.setArea(area);
+    equipo.setArea(nombreArea);
     equipo.setAsignado(false);
-    return entityToDto(
-            equipoRepository.save(equipo)
-    );
+    return entityToDto(equipoRepository.save(equipo));   
 }
 
     // Actualiza un equipo
@@ -89,11 +80,10 @@ public EquipoDTO actualizarEquipo(
         dto.getMotivoBaja(),
         "BAJA"
 );
-    actualizarDatos(equipo, dto);
-equipo.setArea(obtenerArea(Objects.requireNonNull(dto.getNombreArea(), "El área es obligatoria")));
-    return entityToDto(
-            equipoRepository.save(equipo)
-    );
+actualizarDatos(equipo, dto);
+NombreArea nombreArea = Objects.requireNonNull(dto.getNombreArea(), "El área es obligatoria");
+equipo.setArea(nombreArea); 
+    return entityToDto( equipoRepository.save(equipo));
 }
 
     // Elimina un equipo
@@ -103,6 +93,14 @@ public void eliminar(@NonNull Long id) {
     validarEliminacion(equipo);
     equipoRepository.delete(Objects.requireNonNull(equipo, "El equipo a eliminar no puede ser nulo"));
 }
+
+public List<EquipoDTO> buscarPorArea(NombreArea area) {
+    return equipoRepository.findByArea(area)
+            .stream()
+            .map(this::entityToDto)
+            .toList();
+}
+
 
     // VALIDACIONES
     // Valida duplicados solo cuando existe el dato
@@ -159,12 +157,6 @@ private void validarEliminacion(Equipo equipo) {
         return equipoRepository.findById(id)
                 .orElseThrow(() ->
                         new BusinessException("Equipo no encontrado"));
-    }
-
-    private Area obtenerArea(@NonNull NombreArea nombreArea) {
-        return areaRepository.findByNombreArea(nombreArea)
-                .orElseThrow(() ->
-                        new BusinessException("Área no encontrada"));
     }
 
     // MAPPERS
@@ -224,7 +216,7 @@ private void validarEliminacion(Equipo equipo) {
                 equipo.getModelo(),
                 equipo.getColor(),
                 equipo.getObservaciones(),
-                equipo.getArea().getNombreArea(),
+                equipo.getArea(),
                 equipo.getAsignado(),
                 null,
                 null,
