@@ -1,0 +1,17 @@
+# Compilación
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Logs
+*.log
+
+# Configuración local
+application-local.properties
