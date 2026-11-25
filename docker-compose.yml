@@ -38,5 +38,13 @@ services:
       timeout: 5s
       retries: 5
 
+  frontend:
+    build: ../../ProyectFireequipFRONTEND
+    container_name: fireequip_manager
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT}:4000"
+      
 volumes:
   postgres_data:

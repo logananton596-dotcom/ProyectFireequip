@@ -1,19 +1,21 @@
 package com.fireequipmanager.backend.model;
 
-import com.fireequipmanager.backend.model.enumsUbicacion.EstadoUbicacion;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
+import com.fireequipmanager.backend.model.enumsUbicacion.TipoUbicacion;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
         name = "ubicacion",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = "nombre")
+                @UniqueConstraint(columnNames = "codigo")
         }
 )
 @Data
@@ -25,58 +27,60 @@ public class Ubicacion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Código único de la ubicación agregado para asignaciones mov pres y manteni
-    @Column(nullable = false, unique = true, length = 30)
+    // Código único ("P1", "P1-OF-LOG", "P1-OF-LOG-C03")
+    @Column(nullable = false, unique = true, length = 50)
     private String codigo;
 
-    // Nombre visible de la ubicación
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, unique = true, length = 120)
-    private NombreUbicacion nombreUbicacion;
+    // Nombre visible ("Piso 1", "Oficina Logística", "Casillero A-03")
+    @Column(nullable = false, length = 120)
+    private String nombre;
 
-    // Estado de la ubicación
+    // Tipo de ubicación
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private EstadoUbicacion estado = EstadoUbicacion.ACTIVA;
+    @Column(nullable = false, length = 30)
+    private TipoUbicacion tipo;
+
+    // Solo se usa cuando tipo = OTRO
+    @Column(name = "tipo_personalizado", length = 50)
+    private String tipoPersonalizado;
+
+    // Jerarquía: ubicación padre
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "padre_id")
+    private Ubicacion padre;
+
+    @OneToMany(mappedBy = "padre", fetch = FetchType.LAZY)
+    private List<Ubicacion> hijos = new ArrayList<>();
+
+    // Área propietaria (opcional; solo oficinas, depósitos, etc.)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area area;
+
+    // Activo lógico
+    @Column(nullable = false)
+    private Boolean activa = true;
 
     // Observaciones
     @Column(length = 300)
     private String observacion;
-
-    // Indica si la ubicación puede utilizarse
-    @Column(nullable = false)
-    private Boolean activa = true;
 
     // Auditoría
     @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-    @OneToOne(mappedBy = "ubicacion", fetch = FetchType.LAZY)
-    private Casillero casillero;
 
-    // 2. Relación inversa con Oficina
-    @OneToOne(mappedBy = "ubicacion", fetch = FetchType.LAZY)
-    private Oficina oficina;
-    
     @PrePersist
     public void prePersist() {
-
         createdAt = LocalDateTime.now();
-
-        if (estado == null) {
-            estado = EstadoUbicacion.ACTIVA;
-        }
-
         if (activa == null) {
             activa = true;
         }
-
     }
 
     @PreUpdate
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }

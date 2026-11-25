@@ -149,12 +149,4 @@ public class Bombero {
     @JoinColumn(name = "ubicacion_id")
     private Ubicacion ubicacion;
 
-    //casillero
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casillero_id")
-    private Casillero casillero;
-
-
-
-
 }

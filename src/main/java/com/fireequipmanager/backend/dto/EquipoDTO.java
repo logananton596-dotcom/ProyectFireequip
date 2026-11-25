@@ -114,6 +114,15 @@ public class EquipoDTO  implements VidaUtilDTO, StockDTO {
     
     // Estado de asignación
     private Boolean asignado;
+        // Ubicación (id para crear/editar)
+    @NotNull(message = "Debe seleccionar una ubicación")
+    private Long ubicacionId;
+
+        // Campos de solo lectura para mostrar en listados
+    private String ubicacionCodigo;
+    private String ubicacionNombre;
+    private String ubicacionTipo;
+    private String ubicacionDisplay;
 
     //atributos de reglas
     private Boolean alertaStock;

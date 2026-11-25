@@ -299,40 +299,46 @@ public class BienService {
     }
 
     // Convierte entidad a DTO
-    private BienDTO entityToDto(Bien bien) {
+ private BienDTO entityToDto(Bien bien) {
+    if (bien == null) {
+        return null;
+    }
 
-        if (bien == null) {
-            return null;
-        }
+    BienDTO dto = new BienDTO();
+    dto.setId(bien.getId());
+    dto.setCodigoCgbvp(bien.getCodigoCgbvp());
+    dto.setNombre(bien.getNombre());
+    dto.setTipoBien(bien.getTipoBien());
+    dto.setMarca(bien.getMarca());
+    dto.setModelo(bien.getModelo());
+    dto.setNumeroSerie(bien.getNumeroSerie());
+    dto.setFechaAdquisicion(bien.getFechaAdquisicion());
+    dto.setEstado(bien.getEstado());
+    dto.setCondicion(bien.getCondicion());
+    dto.setValorReferencial(bien.getValorReferencial());
+    dto.setEspecificaciones(bien.getEspecificaciones());
+    dto.setObservaciones(bien.getObservaciones());
+    dto.setActivo(bien.getActivo());
 
-        Ubicacion ubicacion = bien.getUbicacion();
+    // Relación de Área propietaria
+    if (bien.getArea() != null) {
+        dto.setAreaId(bien.getArea().getId());
+        dto.setAreaNombre(bien.getArea().getNombreArea());
+    }
 
-        return new BienDTO(
-                bien.getId(),
-                bien.getCodigoCgbvp(),
-                bien.getNombre(),
-                bien.getTipoBien(),
-                bien.getMarca(),
-                bien.getModelo(),
-                bien.getNumeroSerie(),
-                bien.getFechaAdquisicion(),
-                bien.getEstado(),
-                bien.getCondicion(),
-                bien.getValorReferencial(),
-                bien.getEspecificaciones(),
-                bien.getObservaciones(),
-                bien.getArea() != null ? bien.getArea().getId() : null,
-                bien.getArea() != null ? bien.getArea().getNombreArea() : null,
-                ubicacion != null
-                        ? ubicacion.getId()
-                        : null,
-                ubicacion != null
-                        ? ubicacion.getCodigo()
-                        : null,
-                ubicacion != null
-                        ? ubicacion.getNombreUbicacion()
-                        : null,
-                bien.getActivo()
+    // Relación de Ubicación jerárquica
+    if (bien.getUbicacion() != null) {
+        dto.setUbicacionId(bien.getUbicacion().getId());
+        dto.setUbicacionCodigo(bien.getUbicacion().getCodigo());
+        dto.setUbicacionNombre(bien.getUbicacion().getNombre());
+        dto.setUbicacionTipo(
+            bien.getUbicacion().getTipo() != null ? bien.getUbicacion().getTipo().name() : null
+        );
+        dto.setUbicacionDisplay(
+            bien.getUbicacion().getCodigo() + " - " + bien.getUbicacion().getNombre()
         );
     }
+
+    return dto;
+}
 }

@@ -1,13 +1,17 @@
 package com.fireequipmanager.backend.dto;
 
-import com.fireequipmanager.backend.model.enumsUbicacion.EstadoUbicacion;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion; // Unificado al mismo Enum
+import com.fireequipmanager.backend.model.enumsUbicacion.TipoUbicacion;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -16,33 +20,36 @@ public class UbicacionDTO {
 
     private Long id;
 
-    // 🚀 AGREGA EL CÓDIGO: Obligatorio en la Entidad
-    @NotBlank(message = "El código de la ubicación es obligatorio")
-    @Size(max = 30, message = "El código no puede superar los 30 caracteres")
+    @NotBlank(message = "El código es obligatorio")
+    @Size(max = 50, message = "El código no puede superar los 50 caracteres")
     private String codigo;
 
-    // Tipo / Nombre de ubicación (Unificado)
-    @NotNull(message = "Debe seleccionar el tipo de ubicación")
-    private NombreUbicacion nombreUbicacion;
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 120, message = "El nombre no puede superar los 120 caracteres")
+    private String nombre;
 
-    @NotNull(message = "Debe seleccionar el estado de la ubicación")
-    private EstadoUbicacion estado;
+    @NotNull(message = "Debe seleccionar el tipo de ubicación")
+    private TipoUbicacion tipo;
+
+    @Size(max = 50, message = "El tipo personalizado no puede superar los 50 caracteres")
+    private String tipoPersonalizado;
+
+    // Padre (jerarquía)
+    private Long padreId;
+    private String padreNombre;
+
+    // Área propietaria (opcional)
+    private Long areaId;
+    private String areaNombre;
+
+    private Boolean activa;
 
     @Size(max = 300, message = "La observación no puede superar los 300 caracteres")
     private String observacion;
 
-    // Relaciones Opcionales para las respuestas visuales
-    private Long oficinaId;
-    private String oficinaNombre;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    private Long casilleroId;
-    private Integer numeroCasillero;
-
-    private Long vehiculoId;
-    private String vehiculoNombre;
-
-    private Long compartimientoId;
-    private String compartimientoNombre;
-
-    private Boolean activa;
+    // Hijos directos (solo lectura, para vistas de árbol)
+    private List<UbicacionDTO> hijos;
 }

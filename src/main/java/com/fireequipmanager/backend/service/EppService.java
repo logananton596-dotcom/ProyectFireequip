@@ -13,22 +13,23 @@ import com.fireequipmanager.backend.repository.EppRepository;
 import com.fireequipmanager.backend.service.rules.EstadoInventarioRule;
 import com.fireequipmanager.backend.service.rules.VidaUtilRule;
 import org.springframework.lang.NonNull;
+import com.fireequipmanager.backend.repository.UbicacionRepository;
+import com.fireequipmanager.backend.model.Ubicacion;
 
 @Service
 @Transactional
 public class EppService {
     private final EppRepository eppRepository;
     private final AreaRepository areaRepository;
+    private final UbicacionRepository ubicacionRepository;
     public EppService(
             EppRepository eppRepository,
-            AreaRepository areaRepository
-            //EstadoInventarioRule estadoInventarioRule
-            //VidaUtilRule vidaUtilRule
-            ) 
-            {
-
+            AreaRepository areaRepository,
+            UbicacionRepository ubicacionRepository) 
+        {
         this.eppRepository = eppRepository;
         this.areaRepository = areaRepository;
+        this.ubicacionRepository = ubicacionRepository;
     }
 // Lista todos los EPP
 public List<EppDTO> listarTodos() {
@@ -55,22 +56,22 @@ public EppDTO crearEpp(@NonNull EppDTO dto) {
     EstadoInventarioRule.validarEstado(
             dto.getEstado(),
             dto.getFechaBaja(),
-            dto.getMotivoBaja(),
-        "EPP");
-Area area = obtenerArea(dto.getAreaId());
-    Epp epp = dtoToEntity(dto);
+            dto.getMotivoBaja(),"EPP");
+            Area area = obtenerArea(dto.getAreaId());
+            Ubicacion ubicacion = obtenerUbicacion(dto.getUbicacionId());
 
-    epp.setArea(area);
-    epp.setAsignado(false);
+            Epp epp = dtoToEntity(dto);
 
+            epp.setArea(area);
+            epp.setUbicacion(ubicacion);
+            epp.setAsignado(false);
     return entityToDto(
             eppRepository.save(epp));
 
 }
 
 // Actualiza un EPP
-    public EppDTO actualizarEpp(@NonNull Long id,
-                                @NonNull EppDTO dto) {
+    public EppDTO actualizarEpp(@NonNull Long id, @NonNull EppDTO dto) {
 
         Epp epp = obtenerEpp(id);
         Boolean asignadoActual = epp.getAsignado();
@@ -83,9 +84,11 @@ Area area = obtenerArea(dto.getAreaId());
         );
 
         Area area = obtenerArea(dto.getAreaId());
+        Ubicacion ubicacion = obtenerUbicacion(dto.getUbicacionId());
 
         actualizarDatos(epp, dto);
         epp.setArea(area);
+        epp.setUbicacion(ubicacion);
 
         if (dto.getAsignado() == null) {
             epp.setAsignado(asignadoActual);
@@ -171,6 +174,15 @@ private Area obtenerArea(Long areaId) {
             .orElseThrow(() -> new BusinessException("Área no encontrada con id: " + areaId));
 }
 
+private Ubicacion obtenerUbicacion(Long ubicacionId) {
+    if (ubicacionId == null) {
+        throw new BusinessException("La ubicación es obligatoria");
+    }
+    return ubicacionRepository.findById(ubicacionId)
+            .orElseThrow(() -> new BusinessException(
+                    "Ubicación no encontrada con id: " + ubicacionId));
+}
+
 // Calcula indicadores automáticos
 private void completarIndicadores(
         EppDTO dto,
@@ -211,37 +223,40 @@ private void actualizarDatos(
 }
 // Convierte Entity a DTO
 private EppDTO entityToDto(Epp epp) {
-
     EppDTO dto = new EppDTO(
-
-            epp.getId(),
-            epp.getCodigoCgbvp(),
-            epp.getNumeroSerie(),
-            epp.getTipoEpp(),
-            epp.getNombreEpp(),
-            epp.getCompania(),
-            epp.getEstado(),
-            epp.getFechaIncorporacion(),
-            epp.getVidaUtilAnios(),
-            epp.getFechaBaja(),
-            epp.getMotivoBaja(),
-            epp.getTalla(),
-            epp.getMaterial(),
-            epp.getMarca(),
-            epp.getColor(),
-            epp.getObservaciones(),
-            epp.getArea() != null ? epp.getArea().getId() : null,
-            epp.getArea() != null ? epp.getArea().getNombreArea() : null,
-            epp.getAsignado(),
-            // Indicadores (se calculan después)
-            null,
-            null,
-            null,
-            null,            
-            null,
-            null,
-            null
-
+            epp.getId(),                                                      // 1  id
+            epp.getCodigoCgbvp(),                                             // 2  codigoCgbvp
+            epp.getNumeroSerie(),                                             // 3  numeroSerie
+            epp.getTipoEpp(),                                                 // 4  tipoEpp
+            epp.getNombreEpp(),                                               // 5  nombreEpp
+            epp.getCompania(),                                                // 6  compania
+            epp.getEstado(),                                                  // 7  estado
+            epp.getFechaIncorporacion(),                                      // 8  fechaIncorporacion
+            epp.getVidaUtilAnios(),                                           // 9  vidaUtilAnios
+            epp.getFechaBaja(),                                               // 10 fechaBaja
+            epp.getMotivoBaja(),                                              // 11 motivoBaja
+            epp.getTalla(),                                                   // 12 talla
+            epp.getMaterial(),                                                // 13 material
+            epp.getMarca(),                                                   // 14 marca
+            epp.getColor(),                                                   // 15 color
+            epp.getObservaciones(),                                           // 16 observaciones
+            epp.getArea() != null ? epp.getArea().getId() : null,             // 17 areaId
+            epp.getUbicacion() != null ? epp.getUbicacion().getId() : null,   // 18 ubicacionId
+            epp.getUbicacion() != null ? epp.getUbicacion().getCodigo() : null, // 19 ubicacionCodigo
+            epp.getUbicacion() != null ? epp.getUbicacion().getNombre() : null, // 20 ubicacionNombre
+            epp.getUbicacion() != null ? epp.getUbicacion().getTipo().name() : null, // 21 ubicacionTipo
+            epp.getUbicacion() != null
+                    ? epp.getUbicacion().getCodigo() + " - " + epp.getUbicacion().getNombre()
+                    : null,                                                   // 22 ubicacionDisplay
+            epp.getArea() != null ? epp.getArea().getNombreArea() : null,     // 23 areaNombre
+            epp.getAsignado(),                                                // 24 asignado
+            null,  // fechaVencimiento                                        // 25
+            null,  // diasRestantes                                           // 26
+            null,  // proximoAVencer                                          // 27
+            null,  // vidaUtilVencida                                         // 28
+            null,  // alertaStock                                             // 29
+            null,  // sinStock                                                // 30
+            null   // porcentajeStock                                         // 31
     );
 
     completarIndicadores(dto, epp);

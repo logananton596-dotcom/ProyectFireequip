@@ -2,15 +2,15 @@ package com.fireequipmanager.backend.service;
 
 import com.fireequipmanager.backend.dto.UbicacionDTO;
 import com.fireequipmanager.backend.exception.BusinessException;
+import com.fireequipmanager.backend.model.Area;
 import com.fireequipmanager.backend.model.Ubicacion;
-import com.fireequipmanager.backend.model.enumsUbicacion.EstadoUbicacion;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
+import com.fireequipmanager.backend.model.enumsUbicacion.TipoUbicacion;
+import com.fireequipmanager.backend.repository.AreaRepository;
 import com.fireequipmanager.backend.repository.UbicacionRepository;
-
-import jakarta.transaction.Transactional;
 
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -20,20 +20,24 @@ import java.util.Objects;
 public class UbicacionService {
 
     private final UbicacionRepository ubicacionRepository;
+    private final AreaRepository areaRepository;
 
-    public UbicacionService(UbicacionRepository ubicacionRepository) {
+    public UbicacionService(
+            UbicacionRepository ubicacionRepository,
+            AreaRepository areaRepository) {
         this.ubicacionRepository = ubicacionRepository;
+        this.areaRepository = areaRepository;
     }
 
-    // Lista todas las ubicaciones
-    public List<UbicacionDTO> listarTodos() {
+    // Lista todas
+    public List<UbicacionDTO> listarTodas() {
         return ubicacionRepository.findAll()
                 .stream()
                 .map(this::entityToDto)
                 .toList();
     }
 
-    // Lista únicamente las ubicaciones activas
+    // Lista activas
     public List<UbicacionDTO> listarActivas() {
         return ubicacionRepository.findByActivaTrue()
                 .stream()
@@ -41,271 +45,261 @@ public class UbicacionService {
                 .toList();
     }
 
-    // Busca una ubicación por ID
-    public UbicacionDTO buscarPorId(@NonNull Long id) {
-        return entityToDto(obtenerUbicacion(id));
-    }
-        // Busca una ubicación por nombre
-    public UbicacionDTO buscarPorNombre(@NonNull NombreUbicacion nombreUbicacion) {
-        return ubicacionRepository
-                .findByNombreUbicacion(nombreUbicacion) // Ahora es un Optional
-                .map(this::entityToDto)
-                .orElseThrow(() -> new BusinessException("Ubicación no encontrada"));
-    }
-
-    // Lista ubicaciones por tipo
-    public List<UbicacionDTO> listarPorTipo(
-            @NonNull NombreUbicacion nombreUbicacion) {
-
-        return ubicacionRepository
-                .findByNombreUbicacionAndActivaTrue(nombreUbicacion)
+    // Lista por tipo
+    public List<UbicacionDTO> listarPorTipo(TipoUbicacion tipo) {
+        return ubicacionRepository.findByTipo(tipo)
                 .stream()
                 .map(this::entityToDto)
                 .toList();
     }
 
-    // Registra una nueva ubicación
-    public UbicacionDTO crear(UbicacionDTO dto) {
+    // Lista hijas directas
+    public List<UbicacionDTO> listarHijas(Long padreId) {
+        return ubicacionRepository.findByPadreId(padreId)
+                .stream()
+                .map(this::entityToDto)
+                .toList();
+    }
 
+    // Lista raíces (sin padre)
+    public List<UbicacionDTO> listarRaices() {
+        return ubicacionRepository.findByPadreIsNull()
+                .stream()
+                .map(this::entityToDto)
+                .toList();
+    }
+
+    // Busca por id
+    public UbicacionDTO buscarPorId(@NonNull Long id) {
+        return entityToDto(obtenerUbicacion(id));
+    }
+
+    // Crear
+    public UbicacionDTO crear(@NonNull UbicacionDTO dto) {
         validarDatos(dto);
-        validarDuplicados(dto, null);
+        validarCodigoDuplicado(dto, null);
 
-        Ubicacion ubicacion = dtoToEntity(dto);
-
-        if (ubicacion.getEstado() == null) {
-            ubicacion.setEstado(
-                    EstadoUbicacion.ACTIVA
-            );
+        Ubicacion padre = null;
+        if (dto.getPadreId() != null) {
+            padre = obtenerUbicacion(dto.getPadreId());
+            validarPadrePermitido(dto.getTipo(), padre);
         }
 
-        if (ubicacion.getActiva() == null) {
-            ubicacion.setActiva(true);
+        Area area = null;
+        if (dto.getAreaId() != null) {
+            area = areaRepository.findById(dto.getAreaId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Área no encontrada con id: " + dto.getAreaId()));
         }
 
-        return entityToDto(
-                ubicacionRepository.save(ubicacion)
-        );
+        Ubicacion ubicacion = new Ubicacion();
+        ubicacion.setCodigo(dto.getCodigo().trim());
+        ubicacion.setNombre(dto.getNombre().trim());
+        ubicacion.setTipo(dto.getTipo());
+        ubicacion.setTipoPersonalizado(dto.getTipoPersonalizado());
+        ubicacion.setPadre(padre);
+        ubicacion.setArea(area);
+        ubicacion.setActiva(dto.getActiva() != null ? dto.getActiva() : true);
+        ubicacion.setObservacion(dto.getObservacion());
+
+        return entityToDto(ubicacionRepository.save(ubicacion));
     }
 
-    // Actualiza una ubicación
-    public UbicacionDTO actualizar(
-            @NonNull Long id,
-            UbicacionDTO dto) {
-
-        Ubicacion ubicacion =
-                obtenerUbicacion(id);
-
+    // Actualizar
+    public UbicacionDTO actualizar(@NonNull Long id, @NonNull UbicacionDTO dto) {
+        Ubicacion ubicacion = obtenerUbicacion(id);
         validarDatos(dto);
-        validarDuplicados(dto, id);
+        validarCodigoDuplicado(dto, id);
 
-        actualizarDatos(
-                ubicacion,
-                dto
-        );
-
-        return entityToDto(
-                ubicacionRepository.save(Objects.requireNonNull(ubicacion, "Error al guardar la ubicación en el sistema"))
-        );
-    }
-
-    // Activa una ubicación
-    public UbicacionDTO activar(@NonNull Long id) {
-
-        Ubicacion ubicacion = obtenerUbicacion(id);
-
-        ubicacion.setActiva(true);
-        ubicacion.setEstado(EstadoUbicacion.ACTIVA);
-
-        return entityToDto(
-                ubicacionRepository.save(ubicacion)
-        );
-    }
-
-    // Desactiva una ubicación
-    public UbicacionDTO desactivar(@NonNull Long id) {
-
-        Ubicacion ubicacion = obtenerUbicacion(id);
-
-        ubicacion.setActiva(false);
-        ubicacion.setEstado(EstadoUbicacion.INACTIVA);
-
-        return entityToDto(
-                ubicacionRepository.save(ubicacion)
-        );
-    }
-
-    // Elimina una ubicación
-    public void eliminar(@NonNull Long id) {
-
-        Ubicacion ubicacion = obtenerUbicacion(id);
-
-        validarEliminacion(ubicacion);
-
-        ubicacionRepository.delete(Objects.requireNonNull(ubicacion, "La ubicación a eliminar no puede ser nula"));
-    }
-
-    // Validaciones principales
-    private void validarDatos(UbicacionDTO dto) {
-
-        if (dto == null) {
-            throw new BusinessException(
-                    "Los datos de la ubicación no pueden ser nulos"
-            );
-        }
-
-        if (dto.getCodigo() == null ||
-                dto.getCodigo().isBlank()) {
-
-            throw new BusinessException(
-                    "El código de ubicación es obligatorio"
-            );
-        }
-
-        if (dto.getNombreUbicacion() == null) {
-            throw new BusinessException(
-                    "Debe seleccionar un tipo de ubicación"
-            );
-        }
-        if (dto.getEstado() == null) {
-
-            throw new BusinessException(
-                    "Debe seleccionar el estado de la ubicación"
-            );
-        }
-    }
-
-        // Valida códigos y nombres duplicados
-    private void validarDuplicados(
-            UbicacionDTO dto,
-            Long id) {
-
-        if (id == null) {
-            if (ubicacionRepository
-                    .existsByCodigo(dto.getCodigo())) {
-                throw new BusinessException(
-                        "El código de ubicación ya existe"
-                );
+        // Validar padre: no puede ser ella misma ni un descendiente
+        if (dto.getPadreId() != null) {
+            if (dto.getPadreId().equals(id)) {
+                throw new BusinessException("Una ubicación no puede ser su propio padre");
             }
-
-            if (ubicacionRepository
-                    .existsByNombreUbicacion(
-                            dto.getNombreUbicacion())) {
+            Ubicacion padre = obtenerUbicacion(dto.getPadreId());
+            validarPadrePermitido(dto.getTipo(), padre);
+            if (esDescendiente(id, dto.getPadreId())) {
                 throw new BusinessException(
-                        "La ubicación seleccionada ya existe"
-                );
+                        "No se puede asignar como padre a una ubicación descendiente");
+            }
+            ubicacion.setPadre(padre);
+        } else {
+            ubicacion.setPadre(null);
+        }
+
+        Area area = null;
+        if (dto.getAreaId() != null) {
+            area = areaRepository.findById(dto.getAreaId())
+                    .orElseThrow(() -> new BusinessException(
+                            "Área no encontrada con id: " + dto.getAreaId()));
+        }
+        ubicacion.setArea(area);
+
+        ubicacion.setCodigo(dto.getCodigo().trim());
+        ubicacion.setNombre(dto.getNombre().trim());
+        ubicacion.setTipo(dto.getTipo());
+        ubicacion.setTipoPersonalizado(dto.getTipoPersonalizado());
+        ubicacion.setObservacion(dto.getObservacion());
+
+        if (dto.getActiva() != null) {
+            ubicacion.setActiva(dto.getActiva());
+        }
+
+        return entityToDto(ubicacionRepository.save(ubicacion));
+    }
+
+    // Activar / desactivar
+    public UbicacionDTO cambiarActiva(@NonNull Long id, boolean activa) {
+        Ubicacion ubicacion = obtenerUbicacion(id);
+        ubicacion.setActiva(activa);
+        return entityToDto(ubicacionRepository.save(ubicacion));
+    }
+
+    // Eliminar
+    public void eliminar(@NonNull Long id) {
+        Ubicacion ubicacion = obtenerUbicacion(id);
+        validarEliminacion(ubicacion);
+        ubicacionRepository.delete(ubicacion);
+    }
+
+    // ==================== VALIDACIONES ====================
+
+    private void validarDatos(UbicacionDTO dto) {
+        if (dto == null) {
+            throw new BusinessException("Los datos de la ubicación no pueden ser nulos");
+        }
+        if (dto.getCodigo() == null || dto.getCodigo().isBlank()) {
+            throw new BusinessException("El código es obligatorio");
+        }
+        if (dto.getNombre() == null || dto.getNombre().isBlank()) {
+            throw new BusinessException("El nombre es obligatorio");
+        }
+        if (dto.getTipo() == null) {
+            throw new BusinessException("Debe seleccionar el tipo de ubicación");
+        }
+        if (dto.getTipo() == TipoUbicacion.OTRO
+                && (dto.getTipoPersonalizado() == null || dto.getTipoPersonalizado().isBlank())) {
+            throw new BusinessException(
+                    "Debe especificar el tipo personalizado cuando selecciona OTRO");
+        }
+    }
+
+    private void validarCodigoDuplicado(UbicacionDTO dto, Long id) {
+        if (id == null) {
+            if (ubicacionRepository.existsByCodigo(dto.getCodigo())) {
+                throw new BusinessException("El código de ubicación ya existe");
             }
             return;
         }
-
-        if (ubicacionRepository
-                .existsByCodigoAndIdNot(
-                        dto.getCodigo(),
-                        id)) {
-            throw new BusinessException(
-                    "El código pertenece a otra ubicación"
-            );
-        }
-
-        if (ubicacionRepository
-                .existsByNombreUbicacionAndIdNot(
-                        dto.getNombreUbicacion(),
-                        id)) {
-            throw new BusinessException(
-                    "La ubicación pertenece a otro registro"
-            );
+        if (ubicacionRepository.existsByCodigoAndIdNot(dto.getCodigo(), id)) {
+            throw new BusinessException("El código de ubicación pertenece a otra ubicación");
         }
     }
 
+    // Reglas de jerarquía por tipo
+    private void validarPadrePermitido(TipoUbicacion tipoHijo, Ubicacion padre) {
+        TipoUbicacion tipoPadre = padre.getTipo();
 
+        switch (tipoHijo) {
+            case PISO -> throw new BusinessException(
+                    "Un piso no puede tener padre");
+            case OFICINA -> {
+                if (tipoPadre != TipoUbicacion.PISO) {
+                    throw new BusinessException(
+                            "Una oficina debe colgar de un PISO");
+                }
+            }
+            case CASILLERO -> {
+                if (tipoPadre != TipoUbicacion.OFICINA
+                        && tipoPadre != TipoUbicacion.PISO
+                        && tipoPadre != TipoUbicacion.PASILLO) {
+                    throw new BusinessException(
+                            "Un casillero debe colgar de una OFICINA, PISO o PASILLO");
+                }
+            }
+            case COMPARTIMIENTO -> {
+                if (tipoPadre != TipoUbicacion.VEHICULO) {
+                    throw new BusinessException(
+                            "Un compartimiento debe colgar de un VEHICULO");
+                }
+            }
+            case VEHICULO -> {
+                if (tipoPadre != TipoUbicacion.GARAJE
+                        && tipoPadre != TipoUbicacion.PATIO
+                        && tipoPadre != TipoUbicacion.PISO) {
+                    throw new BusinessException(
+                            "Un vehículo debe colgar de un GARAJE, PATIO o PISO");
+                }
+            }
+            // PASILLO, PATIO, GARAJE, DEPOSITO, OTRO: sin restricción estricta
+            default -> { }
+        }
+    }
 
+    // Verifica que candidatoId sea descendiente de raizId
+    private boolean esDescendiente(Long raizId, Long candidatoId) {
+        Ubicacion candidato = ubicacionRepository.findById(candidatoId).orElse(null);
+        while (candidato != null) {
+            if (candidato.getPadre() != null
+                    && Objects.equals(candidato.getPadre().getId(), raizId)) {
+                return true;
+            }
+            candidato = candidato.getPadre();
+        }
+        return false;
+    }
 
-
-    // Valida si una ubicación puede eliminarse
     private void validarEliminacion(Ubicacion ubicacion) {
-
-        if (Boolean.TRUE.equals(ubicacion.getActiva())) {
+        if (ubicacionRepository.existsByPadreId(ubicacion.getId())) {
             throw new BusinessException(
-                    "No se puede eliminar una ubicación activa"
-            );
+                    "No se puede eliminar una ubicación que tiene sub-ubicaciones");
         }
-
-        // Aquí agregaremos posteriormente validaciones de referencias
-        // de equipos, EPP, bienes, bomberos y vehículos.
+        if (ubicacionRepository.existsEquipoEnUbicacion(ubicacion.getId())) {
+            throw new BusinessException(
+                    "No se puede eliminar: hay equipos en esta ubicación");
+        }
+        if (ubicacionRepository.existsEppEnUbicacion(ubicacion.getId())) {
+            throw new BusinessException(
+                    "No se puede eliminar: hay EPP en esta ubicación");
+        }
+        if (ubicacionRepository.existsBienEnUbicacion(ubicacion.getId())) {
+            throw new BusinessException(
+                    "No se puede eliminar: hay bienes en esta ubicación");
+        }
     }
 
-    // Obtiene una ubicación por ID
+    // ==================== HELPERS ====================
+
     private Ubicacion obtenerUbicacion(@NonNull Long id) {
-
         return ubicacionRepository.findById(id)
-                .orElseThrow(() ->
-                        new BusinessException(
-                                "Ubicación no encontrada"
-                        ));
+                .orElseThrow(() -> new BusinessException(
+                        "Ubicación no encontrada con id: " + id));
     }
 
-    // Convierte DTO a entidad
-    private Ubicacion dtoToEntity(UbicacionDTO dto) {
-
-        Ubicacion ubicacion = new Ubicacion();
-
-        actualizarDatos(ubicacion, dto);
-
-        return ubicacion;
-    }
-
-// Actualiza los datos de la ubicación
-private void actualizarDatos(Ubicacion ubicacion, UbicacionDTO dto) {
-    if (ubicacion == null || dto == null) {
-        return;
-    }
-
-    // 🚀 1. CORREGIDO: Mapeamos el Enum al atributo correcto de tu entidad (nombreUbicacion)
-    ubicacion.setNombreUbicacion(dto.getNombreUbicacion());
-
-    // 🚀 2. CORREGIDO: Asignamos el código único (obligatorio en tu entidad)
-    ubicacion.setCodigo(dto.getCodigo());
-
-    // 🚀 3. OPTIMIZADO: Control seguro de nulidad para la bandera 'activa'
-    // Si llega null desde el DTO, por defecto se mantiene en true
-    ubicacion.setActiva(dto.getActiva() == null ? true : dto.getActiva());
-
-    // 🚀 4. CONTROL AUTOMÁTICO DE ENUMS: Sincroniza el Enum de estado según la bandera booleana
-    if (Boolean.TRUE.equals(ubicacion.getActiva())) {
-        ubicacion.setEstado(EstadoUbicacion.ACTIVA);
-    } else {
-        // Asegúrate de que en tu Enum real esté escrito como INACTIVA o si es otra palabra del catálogo
-        ubicacion.setEstado(EstadoUbicacion.INACTIVA); 
-    }
-
-    // 5. Asignamos las observaciones
-    ubicacion.setObservacion(dto.getObservacion());
-}
-
-
-    // Convierte entidad a DTO
     private UbicacionDTO entityToDto(Ubicacion ubicacion) {
-        if (ubicacion == null) {
-            return null;
+        UbicacionDTO dto = new UbicacionDTO();
+
+        dto.setId(ubicacion.getId());
+        dto.setCodigo(ubicacion.getCodigo());
+        dto.setNombre(ubicacion.getNombre());
+        dto.setTipo(ubicacion.getTipo());
+        dto.setTipoPersonalizado(ubicacion.getTipoPersonalizado());
+
+        if (ubicacion.getPadre() != null) {
+            dto.setPadreId(ubicacion.getPadre().getId());
+            dto.setPadreNombre(ubicacion.getPadre().getNombre());
         }
 
-        // Retornamos el DTO rellenando los campos de relaciones como null por defecto.
-        // La carga real de ID y Nombres de Oficina/Casillero/Vehículo la harás mediante subconsultas 
-        // en tu método del Service si es que usas relaciones cruzadas.
-        return new UbicacionDTO(
-                ubicacion.getId(),
-                ubicacion.getCodigo(),
-                ubicacion.getNombreUbicacion(),
-                ubicacion.getEstado(),
-                ubicacion.getObservacion(),
-                null, // oficinaId
-                null, // oficinaNombre
-                null, // casilleroId
-                null, // numeroCasillero
-                null, // vehiculoId
-                null, // vehiculoNombre
-                null, // compartimientoId
-                null, // compartimientoNombre
-                ubicacion.getActiva()
-        );
+        if (ubicacion.getArea() != null) {
+            dto.setAreaId(ubicacion.getArea().getId());
+            dto.setAreaNombre(ubicacion.getArea().getNombreArea());
+        }
+
+        dto.setActiva(ubicacion.getActiva());
+        dto.setObservacion(ubicacion.getObservacion());
+        dto.setCreatedAt(ubicacion.getCreatedAt());
+        dto.setUpdatedAt(ubicacion.getUpdatedAt());
+
+        return dto;
     }
 }

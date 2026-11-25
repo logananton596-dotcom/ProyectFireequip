@@ -1,7 +1,7 @@
 package com.fireequipmanager.backend.controller;
 
 import com.fireequipmanager.backend.dto.UbicacionDTO;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
+import com.fireequipmanager.backend.model.enumsUbicacion.TipoUbicacion;
 import com.fireequipmanager.backend.service.UbicacionService;
 
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/ubicaciones")
@@ -24,104 +23,69 @@ public class UbicacionController {
         this.ubicacionService = ubicacionService;
     }
 
-    // Lista todas las ubicaciones
+    // Listar todas
     @GetMapping
-    public ResponseEntity<List<UbicacionDTO>> listarTodos() {
-
-        return ResponseEntity.ok(
-                ubicacionService.listarTodos()
-        );
+    public ResponseEntity<List<UbicacionDTO>> listarTodas() {
+        return ResponseEntity.ok(ubicacionService.listarTodas());
     }
 
-    // Lista únicamente las ubicaciones activas
+    // Listar activas
     @GetMapping("/activas")
     public ResponseEntity<List<UbicacionDTO>> listarActivas() {
-
-        return ResponseEntity.ok(
-                ubicacionService.listarActivas()
-        );
+        return ResponseEntity.ok(ubicacionService.listarActivas());
     }
 
-    // Busca una ubicación por ID
+    // Listar por tipo
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<List<UbicacionDTO>> listarPorTipo(@PathVariable TipoUbicacion tipo) {
+        return ResponseEntity.ok(ubicacionService.listarPorTipo(tipo));
+    }
+
+    // Listar raíces (sin padre)
+    @GetMapping("/raices")
+    public ResponseEntity<List<UbicacionDTO>> listarRaices() {
+        return ResponseEntity.ok(ubicacionService.listarRaices());
+    }
+
+    // Listar hijas de una ubicación
+    @GetMapping("/{id}/hijas")
+    public ResponseEntity<List<UbicacionDTO>> listarHijas(@PathVariable Long id) {
+        return ResponseEntity.ok(ubicacionService.listarHijas(id));
+    }
+
+    // Buscar por id
     @GetMapping("/{id}")
-    public ResponseEntity<UbicacionDTO> buscarPorId(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                ubicacionService.buscarPorId(Objects.requireNonNull(id, "El ID de la ubicación no puede ser nulo"))
-        );
+    public ResponseEntity<UbicacionDTO> buscarPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(ubicacionService.buscarPorId(id));
     }
 
-    // Busca una ubicación por nombre
-    @GetMapping("/nombre/{nombreUbicacion}")
-    public ResponseEntity<UbicacionDTO> buscarPorNombre(
-            @PathVariable NombreUbicacion nombreUbicacion) {
-
-        return ResponseEntity.ok(
-                ubicacionService.buscarPorNombre(Objects.requireNonNull(nombreUbicacion, "El nombre de la ubicación no puede ser nulo"))
-        );
-    }
-
-    // Lista ubicaciones activas por tipo
-    @GetMapping("/tipo/{nombreUbicacion}")
-    public ResponseEntity<List<UbicacionDTO>> listarPorTipo(
-            @PathVariable NombreUbicacion nombreUbicacion) {
-
-        return ResponseEntity.ok(
-                ubicacionService.listarPorTipo(Objects.requireNonNull(nombreUbicacion, "El nombre de la ubicación no puede ser nulo"))
-        );
-    }
-
-    // Registra una nueva ubicación
+    // Crear
     @PostMapping
-    public ResponseEntity<UbicacionDTO> crear(
-            @Valid @RequestBody UbicacionDTO dto) {
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(
-                        ubicacionService.crear(dto)
-                );
+    public ResponseEntity<UbicacionDTO> crear(@Valid @RequestBody UbicacionDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ubicacionService.crear(dto));
     }
 
-    // Actualiza una ubicación
+    // Actualizar
     @PutMapping("/{id}")
     public ResponseEntity<UbicacionDTO> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody UbicacionDTO dto) {
-
-        return ResponseEntity.ok(
-                ubicacionService.actualizar(Objects.requireNonNull(id, "El ID de la ubicación no puede ser nulo"), Objects.requireNonNull(dto, "El DTO de la ubicación no puede ser nulo"))
-        );
+        return ResponseEntity.ok(ubicacionService.actualizar(id, dto));
     }
 
-    // Activa una ubicación
-    @PatchMapping("/{id}/activar")
-    public ResponseEntity<UbicacionDTO> activar(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                ubicacionService.activar(Objects.requireNonNull(id, "El ID de la ubicación no puede ser nulo"))
-        );
+    // Activar / desactivar
+    @PatchMapping("/{id}/activa")
+    public ResponseEntity<UbicacionDTO> cambiarActiva(
+            @PathVariable Long id,
+            @RequestParam boolean activa) {
+        return ResponseEntity.ok(ubicacionService.cambiarActiva(id, activa));
     }
 
-    // Desactiva una ubicación
-    @PatchMapping("/{id}/desactivar")
-    public ResponseEntity<UbicacionDTO> desactivar(
-            @PathVariable Long id) {
-
-        return ResponseEntity.ok(
-                ubicacionService.desactivar(Objects.requireNonNull(id, "El ID de la ubicación no puede ser nulo"))
-        );
-    }
-
-    // Elimina una ubicación
+    // Eliminar
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(
-            @PathVariable Long id) {
-
-        ubicacionService.eliminar(Objects.requireNonNull(id, "El ID de la ubicación no puede ser nulo"));
-
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        ubicacionService.eliminar(id);
         return ResponseEntity.noContent().build();
     }
 }

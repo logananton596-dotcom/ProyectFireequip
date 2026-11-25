@@ -113,15 +113,8 @@ public class Epp  implements VidaUtilEntity {
      // RELACIÓN CON UBICACIÓN
     // ==========================
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ubicacion_id")
+    @JoinColumn(name = "ubicacion_id",  nullable = false)
     private Ubicacion ubicacion;
-
-    // ==========================
-    // RELACIÓN CON CASILLERO (si aplica)
-    // ==========================
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "casillero_id")
-    private Casillero casillero;
 
     @PrePersist
     public void prePersist() {

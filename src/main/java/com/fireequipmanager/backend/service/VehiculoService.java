@@ -172,7 +172,7 @@ public class VehiculoService {
             );
         }
 
-        if (dto.getNombreUbicacion() == null) {
+        if (dto.getUbicacionId() == null) {
             throw new BusinessException(
                     "Debe seleccionar la ubicación del vehículo"
             );
@@ -268,24 +268,39 @@ public class VehiculoService {
             return null;
         }
 
-        return new VehiculoDTO(
-                vehiculo.getId(),
-                vehiculo.getCodigo(),
-                vehiculo.getNombreVehiculo(),
-                vehiculo.getPlaca(),
-                vehiculo.getMarca(),
-                vehiculo.getTipoVehiculo(),
-                vehiculo.getEstado(),
-                vehiculo.getModelo(),
-                vehiculo.getAnio(),
-                vehiculo.getCapacidadAgua(),
-                vehiculo.getCapacidadEspuma(),
-                vehiculo.getObservacion(),
-                vehiculo.getActivo(),
-                // Mapeo seguro contra nulos del Enum de ubicación
-                vehiculo.getUbicacion() != null ? vehiculo.getUbicacion().getNombreUbicacion() : null,
-                vehiculo.getNumeroMotor(),
-                vehiculo.getNumeroChasis()
-        );
+        VehiculoDTO dto = new VehiculoDTO();
+        dto.setId(vehiculo.getId());
+        dto.setCodigo(vehiculo.getCodigo());
+        dto.setNombreVehiculo(vehiculo.getNombreVehiculo());
+        dto.setPlaca(vehiculo.getPlaca());
+        dto.setMarca(vehiculo.getMarca());
+        dto.setTipoVehiculo(vehiculo.getTipoVehiculo());
+        dto.setEstado(vehiculo.getEstado());
+        dto.setModelo(vehiculo.getModelo());
+        dto.setAnio(vehiculo.getAnio());
+        dto.setCapacidadAgua(vehiculo.getCapacidadAgua());
+        dto.setCapacidadEspuma(vehiculo.getCapacidadEspuma());
+        dto.setObservacion(vehiculo.getObservacion());
+        dto.setActivo(vehiculo.getActivo());
+
+        // Mapeo seguro contra nulos de la Entidad Ubicacion
+        if (vehiculo.getUbicacion() != null) {
+            dto.setUbicacionId(vehiculo.getUbicacion().getId());
+            dto.setUbicacionCodigo(vehiculo.getUbicacion().getCodigo());
+            dto.setUbicacionNombre(vehiculo.getUbicacion().getNombre());
+            dto.setUbicacionTipo(
+                vehiculo.getUbicacion().getTipo() != null
+                    ? vehiculo.getUbicacion().getTipo().name()
+                    : null
+            );
+            dto.setUbicacionDisplay(
+                vehiculo.getUbicacion().getCodigo() + " - " + vehiculo.getUbicacion().getNombre()
+            );
+        }
+
+        dto.setNumeroMotor(vehiculo.getNumeroMotor());
+        dto.setNumeroChasis(vehiculo.getNumeroChasis());
+
+        return dto;
     }
 }

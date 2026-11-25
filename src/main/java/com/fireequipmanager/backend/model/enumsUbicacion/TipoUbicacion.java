@@ -1,14 +1,14 @@
 package com.fireequipmanager.backend.model.enumsUbicacion;
 
-public enum NombreUbicacion {
-
+public enum TipoUbicacion {
+    PISO,
     OFICINA,
     CASILLERO,
     VEHICULO,
     COMPARTIMIENTO,
-    BOMBERO,
-    TALLER,
-    ALMACEN_GENERAL,
-    BAJA,
-    ALMACEN_EPP
+    PATIO,
+    GARAJE,
+    PASILLO,
+    DEPOSITO,
+    OTRO
 }

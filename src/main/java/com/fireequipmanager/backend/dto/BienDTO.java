@@ -1,7 +1,6 @@
 package com.fireequipmanager.backend.dto;
 import com.fireequipmanager.backend.model.enumsBien.EstadoBien;
 import com.fireequipmanager.backend.model.enumsBien.TipoBien;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -116,11 +115,12 @@ public class BienDTO {
     @NotNull(message = "Debe seleccionar la ubicación del bien")
     @Positive(message = "El ID de ubicación debe ser válido")
     private Long ubicacionId;
+        // Campos de solo lectura para mostrar en listados
+    private String ubicacionCodigo;
+    private String ubicacionNombre;
+    private String ubicacionTipo;
+    private String ubicacionDisplay;
 
-    // Información descriptiva de la ubicación
-    private String codigoUbicacion;
-
-    private NombreUbicacion nombreUbicacion;
 
     // Activo lógico
     private Boolean activo;

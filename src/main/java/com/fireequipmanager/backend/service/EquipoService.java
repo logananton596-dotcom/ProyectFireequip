@@ -11,7 +11,8 @@ import com.fireequipmanager.backend.service.rules.EstadoInventarioRule;
 import com.fireequipmanager.backend.service.rules.InventarioRule;
 import com.fireequipmanager.backend.service.rules.StockRule;
 import com.fireequipmanager.backend.service.rules.VidaUtilRule;
-
+import com.fireequipmanager.backend.model.Ubicacion;
+import com.fireequipmanager.backend.repository.UbicacionRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -24,12 +25,15 @@ public class EquipoService {
 
 private final EquipoRepository equipoRepository;
 private final AreaRepository areaRepository;
+private final UbicacionRepository ubicacionRepository;
+
 public EquipoService(
         EquipoRepository equipoRepository,
-        AreaRepository areaRepository) 
-        {
+        AreaRepository areaRepository,
+        UbicacionRepository ubicacionRepository) {
     this.equipoRepository = equipoRepository;
     this.areaRepository = areaRepository;
+    this.ubicacionRepository = ubicacionRepository;
 }
 
     // Lista todos los equipos
@@ -60,12 +64,23 @@ public EquipoDTO crearEquipo(@NonNull EquipoDTO dto) {
         "BAJA"
 );
     Area area = obtenerArea(dto.getAreaId());
+    Ubicacion ubicacion = obtenerUbicacion(dto.getUbicacionId());
     Equipo equipo = dtoToEntity(dto);
     equipo.setArea(area);
+    equipo.setUbicacion(ubicacion);
     equipo.setAsignado(false);
     return entityToDto(
             equipoRepository.save(equipo)
     );
+}
+
+private Ubicacion obtenerUbicacion(Long ubicacionId) {
+    if (ubicacionId == null) {
+        throw new BusinessException("La ubicación es obligatoria");
+    }
+    return ubicacionRepository.findById(ubicacionId)
+            .orElseThrow(() -> new BusinessException(
+                    "Ubicación no encontrada con id: " + ubicacionId));
 }
 
     // Actualiza un equipo
@@ -89,15 +104,16 @@ public EquipoDTO actualizarEquipo(
         "BAJA"
     );
     Area area = obtenerArea(dto.getAreaId());
+    Ubicacion ubicacion = obtenerUbicacion(dto.getUbicacionId());
+
     actualizarDatos(equipo, dto);
     equipo.setArea(area);
-    actualizarDatos(equipo, dto);
-    equipo.setArea(area);
+    equipo.setUbicacion(ubicacion);
 
     if (dto.getAsignado() == null) {
         equipo.setAsignado(asignadoActual);
     }
-    
+
     return entityToDto(equipoRepository.save(equipo));
 }
 
@@ -209,7 +225,6 @@ private void validarEliminacion(Equipo equipo) {
     private EquipoDTO entityToDto(Equipo equipo) {
 
         EquipoDTO dto = new EquipoDTO(
-
                 equipo.getId(),
                 equipo.getCodigoCgbvp(),
                 equipo.getNumeroSerie(),
@@ -231,8 +246,14 @@ private void validarEliminacion(Equipo equipo) {
                 equipo.getModelo(),
                 equipo.getColor(),
                 equipo.getObservaciones(),
-                equipo.getArea() != null ? equipo.getArea().getId() : null,equipo.getArea() != null ? equipo.getArea().getNombreArea() : null,
+                equipo.getArea() != null ? equipo.getArea().getId() : null,
+                equipo.getArea() != null ? equipo.getArea().getNombreArea() : null,
                 equipo.getAsignado(),
+                equipo.getUbicacion() != null ? equipo.getUbicacion().getId() : null,
+                equipo.getUbicacion() != null ? equipo.getUbicacion().getCodigo() : null,
+                equipo.getUbicacion() != null ? equipo.getUbicacion().getNombre() : null,
+                equipo.getUbicacion() != null ? equipo.getUbicacion().getTipo().name() : null,
+                equipo.getUbicacion() != null ? equipo.getUbicacion().getCodigo() + " - " + equipo.getUbicacion().getNombre() : null,
                 null,
                 null,
                 null,

@@ -103,10 +103,7 @@ public class Bien {
 
     // Ubicación física actual del bien
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-            name = "ubicacion_id",
-            nullable = false
-    )
+    @JoinColumn(name = "ubicacion_id", nullable = false)
     private Ubicacion ubicacion;
 
     // Activo lógico del registro

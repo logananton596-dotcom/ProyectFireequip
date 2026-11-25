@@ -2,8 +2,6 @@ package com.fireequipmanager.backend.dto;
 
 import com.fireequipmanager.backend.model.enumsAsignacion.EstadoAsignacion;
 import com.fireequipmanager.backend.model.enumsAsignacion.TipoDestinoAsignacion;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -57,8 +55,6 @@ public class AsignacionDTO {
 
     private String codigoUbicacion;
 
-    private NombreUbicacion nombreUbicacion;
-
     private UbicacionDTO ubicacion;
 
     // =========================================================
@@ -93,5 +89,4 @@ public class AsignacionDTO {
 
     private Long compartimientoId;
 
-    private CompartimientoVehiculoDTO compartimiento;
     }

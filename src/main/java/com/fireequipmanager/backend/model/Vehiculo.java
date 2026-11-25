@@ -73,14 +73,15 @@ public class Vehiculo {
     // Activo
     @Column(nullable = false)
     private Boolean activo = true;
+
     // Ubicación física del vehículo
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ubicacion_id", nullable = false)
+    @JoinColumn(name = "ubicacion_id")
     private Ubicacion ubicacion;
-/*     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UbicacionVehiculo ubicacionVehiculo;
-*/
+    // En Vehiculo
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ubicacion_nodo_id")
+    private Ubicacion ubicacionNodo;
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -88,17 +89,13 @@ public class Vehiculo {
 
     @PrePersist
     public void prePersist() {
-
         createdAt = LocalDateTime.now();
-
         if (activo == null) {
             activo = true;
         }
-
         if (estado == null) {
             estado = EstadoVehiculo.OPERATIVO;
         }
-
     }
 
     @PreUpdate

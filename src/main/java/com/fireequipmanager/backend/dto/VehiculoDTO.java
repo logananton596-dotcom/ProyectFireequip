@@ -4,10 +4,9 @@ import com.fireequipmanager.backend.model.enumsVehiculo.EstadoVehiculo;
 import com.fireequipmanager.backend.model.enumsVehiculo.MarcaVehiculo;
 import com.fireequipmanager.backend.model.enumsVehiculo.NombreVehiculo;
 import com.fireequipmanager.backend.model.enumsVehiculo.TipoVehiculo;
-import com.fireequipmanager.backend.model.enumsUbicacion.NombreUbicacion; // 🚀 Importación del Enum de ubicación
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -53,9 +52,19 @@ public class VehiculoDTO {
 
     private Boolean activo; // Unificado con la entidad
 
-    // 🚀 RELACIÓN POR ENUM: El frontend enviará el identificador del catálogo de ubicación
-    @NotNull(message = "Debe seleccionar la ubicación del vehículo")
-    private NombreUbicacion nombreUbicacion;
+    // =========================================================
+    // UBICACIÓN
+    // =========================================================
+
+    // ID de la ubicación física (opcional; agrega @NotNull si es obligatoria)
+    @Positive(message = "El ID de ubicación debe ser válido")
+    private Long ubicacionId;
+
+    // Campos de solo lectura para mostrar en listados
+    private String ubicacionCodigo;
+    private String ubicacionNombre;
+    private String ubicacionTipo;
+    private String ubicacionDisplay;
 
     // Campos de mantenimiento mecánico agregados en la Entidad
     @Size(max = 30, message = "El número de motor no puede superar los 30 caracteres")

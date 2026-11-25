@@ -89,10 +89,6 @@ public class Asignacion {
 
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "compartimiento_id")
-    private CompartimientoVehiculo compartimiento;
-
     @PrePersist
     public void prePersist() {
 

@@ -2,14 +2,11 @@ package com.fireequipmanager.backend.service;
 
 import com.fireequipmanager.backend.dto.AsignacionDTO;
 import com.fireequipmanager.backend.dto.BomberoDTO;
-import com.fireequipmanager.backend.dto.CompartimientoVehiculoDTO;
 import com.fireequipmanager.backend.dto.EppDTO;
 import com.fireequipmanager.backend.dto.EquipoDTO;
-import com.fireequipmanager.backend.dto.UbicacionDTO;
 import com.fireequipmanager.backend.dto.VehiculoDTO;
 import com.fireequipmanager.backend.model.Asignacion;
 import com.fireequipmanager.backend.model.Bombero;
-import com.fireequipmanager.backend.model.CompartimientoVehiculo;
 import com.fireequipmanager.backend.model.Epp;
 import com.fireequipmanager.backend.model.Equipo;
 import com.fireequipmanager.backend.model.Ubicacion;
@@ -18,7 +15,6 @@ import com.fireequipmanager.backend.model.enumsAsignacion.EstadoAsignacion;
 import com.fireequipmanager.backend.model.enumsAsignacion.TipoDestinoAsignacion;
 import com.fireequipmanager.backend.repository.AsignacionRepository;
 import com.fireequipmanager.backend.repository.BomberoRepository;
-import com.fireequipmanager.backend.repository.CompartimientoVehiculoRepository;
 import com.fireequipmanager.backend.repository.EppRepository;
 import com.fireequipmanager.backend.repository.EquipoRepository;
 import com.fireequipmanager.backend.repository.UbicacionRepository;
@@ -46,7 +42,6 @@ public class AsignacionService {
     private final BomberoRepository bomberoRepository;
     private final VehiculoRepository vehiculoRepository;
     private final UbicacionRepository ubicacionRepository;
-    private final CompartimientoVehiculoRepository compartimientoVehiculoRepository;
 
     // ==========================
     // CONSULTAS (READ)
@@ -148,7 +143,6 @@ public class AsignacionService {
         Bombero bombero = null;
         Vehiculo vehiculo = null;
         Ubicacion ubicacion = null;
-        CompartimientoVehiculo compartimiento = null;
 
         if (dto.getEquipoId() != null) {
             equipo = equipoRepository.findById(Objects.requireNonNull(dto.getEquipoId(), "El ID del equipo no puede ser nulo"))
@@ -167,15 +161,6 @@ public class AsignacionService {
             vehiculo = vehiculoRepository.findById(Objects.requireNonNull(dto.getVehiculoId(), "El ID del vehículo no puede ser nulo"))
                     .orElseThrow(() -> new EntityNotFoundException("Vehículo no encontrado con ID: " + dto.getVehiculoId()));
 
-            if (dto.getCompartimientoId() != null) {
-                compartimiento = compartimientoVehiculoRepository.findById(Objects.requireNonNull(dto.getCompartimientoId(), "El ID del compartimiento no puede ser nulo"))
-                        .orElseThrow(() -> new EntityNotFoundException("Compartimiento no encontrado con ID: " + dto.getCompartimientoId()));
-
-                // Validar que el compartimiento pertenezca al vehículo
-                if (!compartimiento.getVehiculo().getId().equals(vehiculo.getId())) {
-                    throw new IllegalArgumentException("El compartimiento no pertenece al vehículo seleccionado");
-                }
-            }
         } else if (dto.getTipoDestino() == TipoDestinoAsignacion.UBICACION) {
             ubicacion = ubicacionRepository.findById(Objects.requireNonNull(dto.getUbicacionId(), "El ID de la ubicación no puede ser nulo"))
                     .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada con ID: " + dto.getUbicacionId()));
@@ -189,7 +174,6 @@ public class AsignacionService {
         asignacion.setBombero(bombero);
         asignacion.setVehiculo(vehiculo);
         asignacion.setUbicacion(ubicacion);
-        asignacion.setCompartimiento(compartimiento);
         asignacion.setFechaAsignacion(dto.getFechaAsignacion() != null ? dto.getFechaAsignacion() : LocalDate.now());
         asignacion.setFechaDevolucion(dto.getFechaDevolucion());
         asignacion.setFechaFin(dto.getFechaFin());
@@ -199,9 +183,6 @@ public class AsignacionService {
 
         // 7. Guardar la asignación
         Asignacion asignacionGuardada = asignacionRepository.save(asignacion);
-
-        // 8. Actualizar ubicación del recurso
-        actualizarUbicacionRecurso(asignacionGuardada);
 
         log.info("Asignación creada exitosamente con ID: {}", asignacionGuardada.getId());
         return convertirADTO(asignacionGuardada);
@@ -261,7 +242,6 @@ public class AsignacionService {
         Bombero bombero = null;
         Vehiculo vehiculo = null;
         Ubicacion ubicacion = null;
-        CompartimientoVehiculo compartimiento = null;
 
         if (dto.getEquipoId() != null) {
             equipo = equipoRepository.findById(Objects.requireNonNull(dto.getEquipoId(), "El ID del equipo no puede ser nulo"))
@@ -280,14 +260,6 @@ public class AsignacionService {
             vehiculo = vehiculoRepository.findById(Objects.requireNonNull(dto.getVehiculoId(), "El ID del vehículo no puede ser nulo"))
                     .orElseThrow(() -> new EntityNotFoundException("Vehículo no encontrado con ID: " + dto.getVehiculoId()));
 
-            if (dto.getCompartimientoId() != null) {
-                compartimiento = compartimientoVehiculoRepository.findById(Objects.requireNonNull(dto.getCompartimientoId(), "El ID del compartimiento no puede ser nulo"))
-                        .orElseThrow(() -> new EntityNotFoundException("Compartimiento no encontrado con ID: " + dto.getCompartimientoId()));
-
-                if (!compartimiento.getVehiculo().getId().equals(vehiculo.getId())) {
-                    throw new IllegalArgumentException("El compartimiento no pertenece al vehículo seleccionado");
-                }
-            }
         } else if (dto.getTipoDestino() == TipoDestinoAsignacion.UBICACION) {
             ubicacion = ubicacionRepository.findById(Objects.requireNonNull(dto.getUbicacionId(), "El ID de la ubicación no puede ser nulo"))
                     .orElseThrow(() -> new EntityNotFoundException("Ubicación no encontrada con ID: " + dto.getUbicacionId()));
@@ -300,7 +272,6 @@ public class AsignacionService {
         asignacionExistente.setBombero(bombero);
         asignacionExistente.setVehiculo(vehiculo);
         asignacionExistente.setUbicacion(ubicacion);
-        asignacionExistente.setCompartimiento(compartimiento);
         asignacionExistente.setFechaAsignacion(dto.getFechaAsignacion());
         asignacionExistente.setFechaDevolucion(dto.getFechaDevolucion());
         asignacionExistente.setFechaFin(dto.getFechaFin());
@@ -309,8 +280,6 @@ public class AsignacionService {
         // 6. Guardar la asignación
         Asignacion asignacionActualizada = asignacionRepository.save(asignacionExistente);
 
-        // 7. Actualizar ubicación del recurso
-        actualizarUbicacionRecurso(asignacionActualizada);
 
         log.info("Asignación actualizada exitosamente con ID: {}", asignacionActualizada.getId());
         return convertirADTO(asignacionActualizada);
@@ -457,57 +426,6 @@ public class AsignacionService {
     // ACTUALIZACIÓN DE UBICACIÓN
     // ==========================
 
-    private void actualizarUbicacionRecurso(Asignacion asignacion) {
-        Equipo equipo = asignacion.getEquipo();
-        Epp epp = asignacion.getEpp();
-
-        if (equipo != null) {
-            Ubicacion nuevaUbicacion = obtenerUbicacionDesdeAsignacion(asignacion);
-            equipo.setUbicacion(nuevaUbicacion);
-            equipoRepository.save(equipo);
-            log.info("Ubicación del equipo {} actualizada a: {}", equipo.getId(), nuevaUbicacion != null ? nuevaUbicacion.getNombreUbicacion() : "null");
-        }
-
-        if (epp != null) {
-            Ubicacion nuevaUbicacion = obtenerUbicacionDesdeAsignacion(asignacion);
-            epp.setUbicacion(nuevaUbicacion);
-            eppRepository.save(epp);
-            log.info("Ubicación del EPP {} actualizada a: {}", epp.getId(), nuevaUbicacion != null ? nuevaUbicacion.getNombreUbicacion() : "null");
-        }
-    }
-
-    private Ubicacion obtenerUbicacionDesdeAsignacion(Asignacion asignacion) {
-        TipoDestinoAsignacion tipoDestino = asignacion.getTipoDestino();
-
-        switch (tipoDestino) {
-            case BOMBERO:
-                Bombero bombero = asignacion.getBombero();
-                if (bombero != null && bombero.getUbicacion() != null) {
-                    return bombero.getUbicacion();
-                }
-                // Si el bombero no tiene ubicación, devolver null
-                return null;
-
-            case VEHICULO:
-                Vehiculo vehiculo = asignacion.getVehiculo();
-                if (vehiculo != null) {
-                    // Si tiene compartimiento, usamos la ubicación del compartimiento
-                    if (asignacion.getCompartimiento() != null) {
-                        return asignacion.getCompartimiento().getUbicacion();
-                    }
-                    // Si no tiene compartimiento, usamos la ubicación del vehículo
-                    return vehiculo.getUbicacion();
-                }
-                return null;
-
-            case UBICACION:
-                return asignacion.getUbicacion();
-
-            default:
-                return null;
-        }
-    }
-
     private void liberarRecurso(Asignacion asignacion) {
         Equipo equipo = asignacion.getEquipo();
         Epp epp = asignacion.getEpp();
@@ -577,24 +495,6 @@ public class AsignacionService {
             dto.setVehiculo(vehiculoDTO);
         }
 
-        if (asignacion.getUbicacion() != null) {
-            dto.setUbicacionId(asignacion.getUbicacion().getId());
-            UbicacionDTO ubicacionDTO = new UbicacionDTO();
-            ubicacionDTO.setId(asignacion.getUbicacion().getId());
-            ubicacionDTO.setNombreUbicacion(asignacion.getUbicacion().getNombreUbicacion());
-            ubicacionDTO.setCodigo(asignacion.getUbicacion().getCodigo());
-            dto.setUbicacion(ubicacionDTO);
-            dto.setCodigoUbicacion(asignacion.getUbicacion().getCodigo());
-            dto.setNombreUbicacion(asignacion.getUbicacion().getNombreUbicacion());
-        }
-
-        if (asignacion.getCompartimiento() != null) {
-            dto.setCompartimientoId(asignacion.getCompartimiento().getId());
-            CompartimientoVehiculoDTO compartimientoDTO = new CompartimientoVehiculoDTO();
-            compartimientoDTO.setId(asignacion.getCompartimiento().getId());
-            compartimientoDTO.setCodigo(asignacion.getCompartimiento().getCodigo());
-            dto.setCompartimiento(compartimientoDTO);
-        }
 
         // Fechas
         dto.setFechaAsignacion(asignacion.getFechaAsignacion());

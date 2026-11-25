@@ -87,9 +87,17 @@ public class EppDTO  implements VidaUtilDTO, StockDTO {
 
     @NotNull(message = "Debe seleccionar un áreaA")
     private Long areaId;
+    @NotNull(message = "Debe seleccionar la ubicación")
+    private Long ubicacionId;
 
     private String areaNombre;   // solo lectura, se 
     // rellena en entityToDto
+
+    // Campos de solo lectura para mostrar en listados
+    private String ubicacionCodigo;
+    private String ubicacionNombre;
+    private String ubicacionTipo;
+    private String ubicacionDisplay;
     
     // Estado de asignación
     private Boolean asignado;

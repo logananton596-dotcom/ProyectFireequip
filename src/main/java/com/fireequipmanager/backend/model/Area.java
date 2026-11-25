@@ -47,8 +47,11 @@ public class Area {
 
     private Boolean activo = true;
 
-
     // Relación bidireccional opcional (útil si necesitas listar equipos desde el área)
     @OneToMany(mappedBy = "area", cascade = CascadeType.ALL)
     private List<Equipo> equipos;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "oficina_principal_id")
+    private Ubicacion oficinaPrincipal;
 }
