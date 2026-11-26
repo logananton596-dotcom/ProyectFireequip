@@ -1,16 +1,12 @@
 package com.fireequipmanager.backend.dto;
 
-import com.fireequipmanager.backend.model.enumsVehiculo.EstadoVehiculo;
-import com.fireequipmanager.backend.model.enumsVehiculo.MarcaVehiculo;
-import com.fireequipmanager.backend.model.enumsVehiculo.NombreVehiculo;
-import com.fireequipmanager.backend.model.enumsVehiculo.TipoVehiculo;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import com.fireequipmanager.backend.model.enumsVehiculo.*;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -19,20 +15,25 @@ public class VehiculoDTO {
 
     private Long id;
 
-    // Código interno requerido por la Entidad
     @NotBlank(message = "El código del vehículo es obligatorio")
     @Size(max = 20, message = "El código no puede superar los 20 caracteres")
     private String codigo;
 
-    @NotNull(message = "Debe seleccionar un vehículo")
-    private NombreVehiculo nombreVehiculo;
+    @NotBlank(message = "El nombre del vehículo es obligatorio")
+    @Size(max = 80, message = "El nombre no puede superar los 80 caracteres")
+    private String nombreVehiculo;
 
-    @NotBlank(message = "La placa es obligatoria")
     @Size(max = 15, message = "La placa no puede superar los 15 caracteres")
     private String placa;
 
-    @NotNull(message = "Debe seleccionar una marca")
-    private MarcaVehiculo marca;
+    @NotBlank(message = "La marca es obligatoria")
+    @Size(max = 80, message = "La marca no puede superar los 80 caracteres")
+    private String marca;
+
+    @Size(max = 80, message = "El modelo no puede superar los 80 caracteres")
+    private String modelo;
+
+    private Integer anio;
 
     @NotNull(message = "Debe seleccionar un tipo")
     private TipoVehiculo tipoVehiculo;
@@ -40,36 +41,68 @@ public class VehiculoDTO {
     @NotNull(message = "Debe seleccionar un estado")
     private EstadoVehiculo estado;
 
-    @Size(max = 80, message = "El modelo no puede superar los 80 caracteres")
-    private String modelo;
-
-    private Integer anio;
-    private Integer capacidadAgua;
-    private Integer capacidadEspuma;
-
-    @Size(max = 500, message = "La observación no puede superar los 500 caracteres")
-    private String observacion; // Unificado con la entidad
-
-    private Boolean activo; // Unificado con la entidad
-
-    // =========================================================
-    // UBICACIÓN
-    // =========================================================
-
-    // ID de la ubicación física (opcional; agrega @NotNull si es obligatoria)
-    @Positive(message = "El ID de ubicación debe ser válido")
-    private Long ubicacionId;
-
-    // Campos de solo lectura para mostrar en listados
-    private String ubicacionCodigo;
-    private String ubicacionNombre;
-    private String ubicacionTipo;
-    private String ubicacionDisplay;
-
-    // Campos de mantenimiento mecánico agregados en la Entidad
-    @Size(max = 30, message = "El número de motor no puede superar los 30 caracteres")
+    @Size(max = 30)
     private String numeroMotor;
 
-    @Size(max = 30, message = "El número de chasis no puede superar los 30 caracteres")
+    @Size(max = 30)
     private String numeroChasis;
+
+    @Size(max = 500)
+    private String observacion;
+
+    private Boolean activo;
+
+    // Capacidades
+    private Integer capacidadAguaLitros;
+    private Integer capacidadCombustibleGalones;
+
+    // Combustible y aceite
+    private TipoCombustible tipoCombustible;
+
+    @Size(max = 50)
+    private String tipoAceite;
+
+    private Integer intervaloCambioAceiteKm;
+
+    // Llantas
+    @Size(max = 50)
+    private String marcaLlanta;
+
+    @Size(max = 50)
+    private String medidaLlanta;
+
+    @Size(max = 20)
+    private String tamanoAro;
+
+    private TipoLlanta tipoLlanta;
+
+    @Size(max = 20)
+    private String presionLlanta;
+
+    // Batería
+    @Size(max = 50)
+    private String tipoBateria;
+
+    @Size(max = 50)
+    private String marcaBateria;
+
+    @Size(max = 30)
+    private String amperajeBateria;
+
+    private Integer numeroPlacasBateria;
+
+    // Documentación legal
+    private LocalDate soatVigencia;
+    private LocalDate revisionTecnicaVigencia;
+
+    // Servicio
+    private Integer tiempoServicioAnios;
+    private LocalDate fechaIncorporacion;
+
+    // Ubicación
+    @NotNull(message = "Debe seleccionar la ubicación del vehículo")
+    private Long ubicacionNodoId;
+
+    private String ubicacionNodoNombre;
+    private String ubicacionNodoCodigo;
 }

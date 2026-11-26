@@ -7,6 +7,9 @@ import com.fireequipmanager.backend.model.enumsBombero.EstadoBombero;
 import com.fireequipmanager.backend.repository.BomberoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import com.fireequipmanager.backend.model.Ubicacion;
+import com.fireequipmanager.backend.model.enumsUbicacion.TipoUbicacion;
+import com.fireequipmanager.backend.repository.UbicacionRepository;
 
 import java.util.List;
 
@@ -15,9 +18,11 @@ import java.util.List;
 public class BomberoService {
 
     private final BomberoRepository bomberoRepository;
+    private final UbicacionRepository ubicacionRepository;
 
-    public BomberoService(BomberoRepository bomberoRepository) {
+    public BomberoService(BomberoRepository bomberoRepository, UbicacionRepository ubicacionRepository) {
         this.bomberoRepository = bomberoRepository;
+        this.ubicacionRepository = ubicacionRepository;
     }
 
     // Lista todos los bomberos
@@ -56,9 +61,15 @@ public class BomberoService {
         if (bomberoRepository.existsByDni(dto.getDni())) {
             throw new BusinessException("El DNI ya se encuentra registrado");
         }
+        if (dto.getCasilleroId() != null
+        && bomberoRepository.existsByUbicacionId(dto.getCasilleroId())) {
+            throw new BusinessException(
+                    "El casillero seleccionado ya está asignado a otro bombero");
+        }
 
+        Ubicacion casillero = obtenerCasillero(dto.getCasilleroId());
         Bombero bombero = dtoToEntity(dto);
-    
+         bombero.setUbicacion(casillero);
         Bombero bomberoGuardado = bomberoRepository.save(bombero);
         return entityToDto(bomberoGuardado);
     }
@@ -77,13 +88,17 @@ public class BomberoService {
         if (bomberoRepository.existsByDniAndIdNot(dto.getDni(), id)) {
             throw new BusinessException("El DNI ya pertenece a otro bombero");
         }
+        if (dto.getCasilleroId() != null
+        && bomberoRepository.existsByUbicacionIdAndIdNot(dto.getCasilleroId(), id)) {
+            throw new BusinessException(
+                    "El casillero seleccionado ya está asignado a otro bombero");
+        }
 
+        Ubicacion casillero = obtenerCasillero(dto.getCasilleroId());
         actualizarDatosBombero(bombero, dto);
-
-        // SOLUCIÓN: Almacenar en variable local y validar nulidad antes de convertir
+        bombero.setUbicacion(casillero);
         Bombero bomberoActualizado = bomberoRepository.save(bombero);
-
-    return entityToDto(bomberoActualizado);
+        return entityToDto(bomberoActualizado);
     }
 
     // Cambia el estado administrativo
@@ -112,15 +127,28 @@ public class BomberoService {
         bomberoRepository.delete(bombero);
     }
 
+    private Ubicacion obtenerCasillero(Long casilleroId) {
+        if (casilleroId == null) {
+            return null;
+        }
+        Ubicacion ubicacion = ubicacionRepository.findById(casilleroId)
+                .orElseThrow(() -> new BusinessException(
+                        "Casillero no encontrado con id: " + casilleroId));
+
+        if (ubicacion.getTipo() != TipoUbicacion.CASILLERO) {
+            throw new BusinessException(
+                    "La ubicación seleccionada no es un casillero");
+        }
+
+        return ubicacion;
+    }
     // Convierte DTO a Entity
     private Bombero dtoToEntity(BomberoDTO dto) {
-
         Bombero bombero = new Bombero();
-
         actualizarDatosBombero(bombero, dto);
-
         return bombero;
     }
+    
 
     // Actualiza los datos de la entidad
     private void actualizarDatosBombero(Bombero bombero, BomberoDTO dto) {
@@ -156,38 +184,59 @@ public class BomberoService {
         
         bombero.setEstado(dto.getEstado());
         bombero.setMotivoEstado(dto.getMotivoEstado());
-    }
+                // Asignación de Casillero / Ubicación (opcional)
+        Long casilleroId = dto.getCasilleroId();
+        if (casilleroId != null) {
+            Ubicacion ubicacion = ubicacionRepository.findById(java.util.Objects.requireNonNull(casilleroId))
+                    .orElseThrow(() -> new BusinessException("El casillero seleccionado no existe"));
+            bombero.setUbicacion(ubicacion);
+        } else {
+            bombero.setUbicacion(null);
+        }
 
+    }
     // Convierte Entity a DTO
     private BomberoDTO entityToDto(Bombero bombero) {
+        if (bombero == null) {
+            return null;
+        }
 
-        return new BomberoDTO(
-                bombero.getId(),
-                bombero.getCodigoCgbvp(),
-                bombero.getCompania(),
-                bombero.getFechaIncorporacion(),
-                bombero.getNombre(),
-                bombero.getApellido(),
-                bombero.getDni(),
-                bombero.getFechaNacimiento(),
-                bombero.getTipoSangre(),
-                bombero.getTalla(),
-                bombero.getPeso(),
-                bombero.getTieneCargo(),
-                bombero.getTipoCargo(),
-                bombero.getFechaInicioCargo(),
-                bombero.getFechaFinCargo(),
-                bombero.getGrado(),
-                bombero.getTelefono(),
-                bombero.getTelefonoEmergencia(),
-                bombero.getCorreo(),
-                bombero.getLicencia(),
-                bombero.getTipoLicencia(),
-                bombero.getTipoVehiculoLicencia(),
-                bombero.getLimitacionSalud(),
-                bombero.getEstado(),
-                bombero.getMotivoEstado()
+        BomberoDTO dto = new BomberoDTO();
+        dto.setId(bombero.getId());
+        dto.setCodigoCgbvp(bombero.getCodigoCgbvp());
+        dto.setCompania(bombero.getCompania());
+        dto.setFechaIncorporacion(bombero.getFechaIncorporacion());
+        dto.setNombre(bombero.getNombre());
+        dto.setApellido(bombero.getApellido());
+        dto.setDni(bombero.getDni());
+        dto.setFechaNacimiento(bombero.getFechaNacimiento());
+        dto.setTipoSangre(bombero.getTipoSangre());
+        dto.setTalla(bombero.getTalla());
+        dto.setPeso(bombero.getPeso());
+        dto.setTieneCargo(bombero.getTieneCargo());
+        dto.setTipoCargo(bombero.getTipoCargo());
+        dto.setFechaInicioCargo(bombero.getFechaInicioCargo());
+        dto.setFechaFinCargo(bombero.getFechaFinCargo());
+        dto.setGrado(bombero.getGrado());
+        dto.setTelefono(bombero.getTelefono());
+        dto.setTelefonoEmergencia(bombero.getTelefonoEmergencia());
+        dto.setCorreo(bombero.getCorreo());
+        dto.setLicencia(bombero.getLicencia());
+        dto.setTipoLicencia(bombero.getTipoLicencia());
+        dto.setTipoVehiculoLicencia(bombero.getTipoVehiculoLicencia());
+        dto.setLimitacionSalud(bombero.getLimitacionSalud());
+        dto.setEstado(bombero.getEstado());
+        dto.setMotivoEstado(bombero.getMotivoEstado());
+
+        if (bombero.getUbicacion() != null) {
+            dto.setCasilleroId(bombero.getUbicacion().getId());
+            dto.setCasilleroNombre(bombero.getUbicacion().getNombre());
+            dto.setCasilleroCodigo(bombero.getUbicacion().getCodigo());
+            dto.setCasilleroDisplay(
+                bombero.getUbicacion().getCodigo() + " - " + bombero.getUbicacion().getNombre()
             );
-    }
+        }
 
+        return dto;
+    }
 }

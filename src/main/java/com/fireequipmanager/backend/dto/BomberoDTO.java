@@ -136,4 +136,13 @@ public class BomberoDTO {
     @Size(max = 300)
     private String motivoEstado;
 
+    // ==================== CASILLERO ====================
+        // ID del casillero (opcional)
+        private Long casilleroId;
+
+        // Nombre del casillero (solo lectura, para mostrar)
+        private String casilleroNombre;
+        private String casilleroCodigo;
+        private String casilleroDisplay; 
+
 }

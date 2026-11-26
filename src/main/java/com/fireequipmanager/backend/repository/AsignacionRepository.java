@@ -1,9 +1,11 @@
 package com.fireequipmanager.backend.repository;
 
 import com.fireequipmanager.backend.model.Asignacion;
+
 import com.fireequipmanager.backend.model.enumsAsignacion.EstadoAsignacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 
 import java.util.List;
 
@@ -22,9 +24,14 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, Long> {
 
     List<Asignacion> findByVehiculoId(Long vehiculoId);
 
+    // Busca un bombero por su casillero asignado
     List<Asignacion> findByUbicacionId(Long ubicacionId);
+    // Verifica si un casillero ya está asignado a un bombero
+    boolean existsByUbicacionId(Long casilleroId);
 
-    List<Asignacion> findByCompartimientoId(Long compartimientoId);
+    // Verifica si un casillero está asignado a otro bombero (al actualizar)
+    boolean existsByUbicacionIdAndIdNot(Long casilleroId, Long id);
+
 
     List<Asignacion> findByEstado(
             EstadoAsignacion estado

@@ -1,16 +1,21 @@
 package com.fireequipmanager.backend.model.enumsVehiculo;
 
 public enum TipoVehiculo {
-
+    // Contra incendios
     AUTOBOMBA,
-
     CISTERNA,
 
+    // Rescate y salvamento
     RESCATE,
-
-    AMBULANCIA,
-
     UNIDAD_LIGERA,
 
-    COMANDO
+    // Emergencias médicas
+    AMBULANCIA,
+
+    // Coordinación y mando
+    COMANDO,
+
+    // Otros
+    TRANSPORTE_PERSONAL,
+    MATERIALES_PELIGROSOS
 }

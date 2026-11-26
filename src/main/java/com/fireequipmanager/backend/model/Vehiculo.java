@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.fireequipmanager.backend.model.enumsVehiculo.*;
@@ -25,63 +27,104 @@ public class Vehiculo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Código interno
+    // ============ IDENTIFICACIÓN ============
     @Column(nullable = false, unique = true, length = 20)
     private String codigo;
 
-    // Nombre visible
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 80)
-    private NombreVehiculo nombreVehiculo;
+    private String nombreVehiculo;
 
-    // Placa
-    @Column(nullable = false, unique = true, length = 15)
+    @Column(unique = true, length = 15)
     private String placa;
 
-    // Marca
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MarcaVehiculo marca;
+    @Column(nullable = false, length = 80)
+    private String marca;
 
-    // Tipo
+    @Column(length = 80)
+    private String modelo;
+
+    private Integer anio;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoVehiculo tipoVehiculo;
 
-    // Estado
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstadoVehiculo estado;
 
-    // Modelo
-    @Column(length = 80)
-    private String modelo;
+    @Column(length = 30)
+    private String numeroMotor;
 
-    // Año
-    private Integer anio;
+    @Column(length = 30)
+    private String numeroChasis;
 
-    // Capacidad de agua
-    private Integer capacidadAgua;
-
-    // Capacidad de espuma
-    private Integer capacidadEspuma;
-
-    // Observaciones
     @Column(length = 500)
     private String observacion;
 
-    // Activo
     @Column(nullable = false)
     private Boolean activo = true;
 
-    // Ubicación física del vehículo
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ubicacion_id")
-    private Ubicacion ubicacion;
-    // En Vehiculo
+    // ============ CAPACIDADES ============
+    private Integer capacidadAguaLitros;
+    private Integer capacidadCombustibleGalones;
+
+    // ============ COMBUSTIBLE Y ACEITE ============
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TipoCombustible tipoCombustible;
+
+    @Column(length = 50)
+    private String tipoAceite;
+
+    private Integer intervaloCambioAceiteKm;
+
+    // ============ LLANTAS ============
+    @Column(length = 50)
+    private String marcaLlanta;
+
+    @Column(length = 50)
+    private String medidaLlanta;
+
+    @Column(length = 20)
+    private String tamanoAro;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private TipoLlanta tipoLlanta;
+
+    @Column(length = 20)
+    private String presionLlanta;
+
+    // ============ BATERÍA ============
+    @Column(length = 50)
+    private String tipoBateria;
+
+    @Column(length = 50)
+    private String marcaBateria;
+
+    @Column(length = 30)
+    private String amperajeBateria;
+
+    private Integer numeroPlacasBateria;
+
+    // ============ DOCUMENTACIÓN LEGAL ============
+    private LocalDate soatVigencia;
+    private LocalDate revisionTecnicaVigencia;
+
+    // ============ SERVICIO ============
+    private Integer tiempoServicioAnios;
+    private LocalDate fechaIncorporacion;
+
+    // ============ RELACIONES ============
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ubicacion_nodo_id")
     private Ubicacion ubicacionNodo;
+
+    // @OneToMany(mappedBy = "vehiculo", fetch = FetchType.LAZY)
+    // private List<Mantenimiento> mantenimientos;
+
+    // ============ AUDITORÍA ============
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
@@ -90,23 +133,12 @@ public class Vehiculo {
     @PrePersist
     public void prePersist() {
         createdAt = LocalDateTime.now();
-        if (activo == null) {
-            activo = true;
-        }
-        if (estado == null) {
-            estado = EstadoVehiculo.OPERATIVO;
-        }
+        if (activo == null) activo = true;
+        if (estado == null) estado = EstadoVehiculo.OPERATIVO;
     }
 
     @PreUpdate
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
-//atrib extras para mantenimiento de vehiculos
-    @Column(length = 30)
-    private String numeroMotor;
-
-    @Column(length = 30)
-    private String numeroChasis;
-
 }

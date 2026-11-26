@@ -11,7 +11,8 @@ import com.fireequipmanager.backend.repository.UbicacionRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.fireequipmanager.backend.repository.BomberoRepository;
+import static java.util.Objects.requireNonNull;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,12 +22,15 @@ public class UbicacionService {
 
     private final UbicacionRepository ubicacionRepository;
     private final AreaRepository areaRepository;
+    private final BomberoRepository bomberoRepository;
 
     public UbicacionService(
             UbicacionRepository ubicacionRepository,
-            AreaRepository areaRepository) {
+            AreaRepository areaRepository,
+            BomberoRepository bomberoRepository) {
         this.ubicacionRepository = ubicacionRepository;
         this.areaRepository = areaRepository;
+        this.bomberoRepository = bomberoRepository;
     }
 
     // Lista todas
@@ -81,13 +85,13 @@ public class UbicacionService {
 
         Ubicacion padre = null;
         if (dto.getPadreId() != null) {
-            padre = obtenerUbicacion(dto.getPadreId());
+            padre = obtenerUbicacion(requireNonNull(dto.getPadreId()));
             validarPadrePermitido(dto.getTipo(), padre);
         }
 
         Area area = null;
         if (dto.getAreaId() != null) {
-            area = areaRepository.findById(dto.getAreaId())
+            area = areaRepository.findById(requireNonNull(dto.getAreaId()))
                     .orElseThrow(() -> new BusinessException(
                             "Área no encontrada con id: " + dto.getAreaId()));
         }
@@ -116,7 +120,7 @@ public class UbicacionService {
             if (dto.getPadreId().equals(id)) {
                 throw new BusinessException("Una ubicación no puede ser su propio padre");
             }
-            Ubicacion padre = obtenerUbicacion(dto.getPadreId());
+            Ubicacion padre = obtenerUbicacion(requireNonNull(dto.getPadreId()));
             validarPadrePermitido(dto.getTipo(), padre);
             if (esDescendiente(id, dto.getPadreId())) {
                 throw new BusinessException(
@@ -129,7 +133,7 @@ public class UbicacionService {
 
         Area area = null;
         if (dto.getAreaId() != null) {
-            area = areaRepository.findById(dto.getAreaId())
+            area = areaRepository.findById(requireNonNull(dto.getAreaId()))
                     .orElseThrow(() -> new BusinessException(
                             "Área no encontrada con id: " + dto.getAreaId()));
         }
@@ -159,7 +163,7 @@ public class UbicacionService {
     public void eliminar(@NonNull Long id) {
         Ubicacion ubicacion = obtenerUbicacion(id);
         validarEliminacion(ubicacion);
-        ubicacionRepository.delete(ubicacion);
+        ubicacionRepository.delete(requireNonNull(ubicacion));
     }
 
     // ==================== VALIDACIONES ====================
@@ -238,7 +242,7 @@ public class UbicacionService {
 
     // Verifica que candidatoId sea descendiente de raizId
     private boolean esDescendiente(Long raizId, Long candidatoId) {
-        Ubicacion candidato = ubicacionRepository.findById(candidatoId).orElse(null);
+        Ubicacion candidato = ubicacionRepository.findById(requireNonNull(candidatoId)).orElse(null);
         while (candidato != null) {
             if (candidato.getPadre() != null
                     && Objects.equals(candidato.getPadre().getId(), raizId)) {
@@ -297,6 +301,15 @@ public class UbicacionService {
 
         dto.setActiva(ubicacion.getActiva());
         dto.setObservacion(ubicacion.getObservacion());
+        if (ubicacion.getTipo() == TipoUbicacion.CASILLERO) {
+            bomberoRepository.findByUbicacionId(ubicacion.getId())
+                    .ifPresent(b -> {
+                        dto.setBomberoAsignadoId(b.getId());
+                        dto.setBomberoAsignadoNombre(
+                                b.getApellido() + ", " + b.getNombre()
+                        );
+                    });
+        }
         dto.setCreatedAt(ubicacion.getCreatedAt());
         dto.setUpdatedAt(ubicacion.getUpdatedAt());
 

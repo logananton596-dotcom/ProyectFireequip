@@ -6,6 +6,7 @@ import com.fireequipmanager.backend.model.enumsVehiculo.TipoVehiculo;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,13 @@ public interface VehiculoRepository extends JpaRepository<Vehiculo, Long> {
     // Lista vehículos disponibles para asignación
     List<Vehiculo> findByActivoTrue();
     List<Vehiculo> findByEstadoAndActivoTrue(EstadoVehiculo estado);
+
+    // Busca por código
+    Optional<Vehiculo> findByCodigo(String codigo);
+    boolean existsByCodigo(String codigo);
+    boolean existsByCodigoAndIdNot(String codigo, Long id);
+
+    // Vehículos con SOAT por vencer (útil para dashboard)
+    List<Vehiculo> findBySoatVigenciaBefore(LocalDate fecha);
+    List<Vehiculo> findByRevisionTecnicaVigenciaBefore(LocalDate fecha);
 }

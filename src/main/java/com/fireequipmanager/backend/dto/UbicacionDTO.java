@@ -52,4 +52,9 @@ public class UbicacionDTO {
 
     // Hijos directos (solo lectura, para vistas de árbol)
     private List<UbicacionDTO> hijos;
+
+    // Solo lectura: bombero asignado a un casillero
+    private Long bomberoAsignadoId; 
+    private String bomberoAsignadoNombre;
+
 }

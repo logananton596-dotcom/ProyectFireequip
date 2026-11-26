@@ -37,5 +37,15 @@ public interface BomberoRepository extends JpaRepository<Bombero, Long> {
             String nombre,
             EstadoBombero estado
     );
+    // Busca un bombero por su casillero asignado
+    Optional<Bombero> findByUbicacionId(Long casilleroId);
+
+    // Verifica si un casillero ya está asignado a un bombero
+    boolean existsByUbicacionId(Long casilleroId);
+
+    // Verifica si un casillero está asignado a otro bombero (al actualizar)
+    boolean existsByUbicacionIdAndIdNot(Long casilleroId, Long id);
+
+    
 
 }

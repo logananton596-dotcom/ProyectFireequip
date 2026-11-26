@@ -2,7 +2,7 @@ package com.fireequipmanager.backend.controller;
 
 import com.fireequipmanager.backend.dto.VehiculoDTO;
 import com.fireequipmanager.backend.service.VehiculoService;
-
+import com.fireequipmanager.backend.model.enumsVehiculo.EstadoVehiculo;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -77,9 +77,24 @@ public class VehiculoController {
     public ResponseEntity<VehiculoDTO> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody VehiculoDTO dto) {
-
         return ResponseEntity.ok(
-                vehiculoService.actualizar(Objects.requireNonNull(id, "El ID del vehículo no puede ser nulo"), Objects.requireNonNull(dto, "El DTO del vehículo no puede ser nulo"))
+                vehiculoService.actualizar(
+                        Objects.requireNonNull(id, "El ID del vehículo no puede ser nulo"),
+                        Objects.requireNonNull(dto, "El DTO del vehículo no puede ser nulo")
+                )
+        );
+    }
+    
+    // Cambia el estado del vehículo y sincroniza automáticamente 'activo' (true solo si es OPERATIVO)
+    @PatchMapping("/{id}/estado")
+    public ResponseEntity<VehiculoDTO> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam EstadoVehiculo nuevoEstado) {
+        return ResponseEntity.ok(
+                vehiculoService.cambiarEstado(
+                        Objects.requireNonNull(id, "El ID del vehículo no puede ser nulo"),
+                        Objects.requireNonNull(nuevoEstado, "El nuevo estado no puede ser nulo")
+                )
         );
     }
 
